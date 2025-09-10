@@ -1,0 +1,153 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai&display=swap');
+
+body {
+    background: #f8f7ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: auto;
+    margin: 20;
+    font-family: "Noto Sans Thai", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    font-variation-settings: "wdth" 100;
+}
+
+.login-container {
+    background: white;
+    padding: 30px;
+    margin-top: auto;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    width: 350px;
+    color: #838bc9;
+}
+
+h2 {
+    color: #505071;
+    margin-bottom: 10px;
+}
+/* input[type="text"], input[type="password"] {
+    width: 80%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #c98483;
+    border-radius: 5px;
+} */
+input {
+    width: 80%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #61618a;
+    border-radius: 5px;
+}
+
+button {
+    width: 30%;
+    padding: 10px;
+    background: #7372ba;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #505071;
+}
+
+a {
+    color: #9695dd;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+a:hover {
+    color: #7e7de1;
+}
+
+.iidiv {
+    text-align: center;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+.iidiv a {
+    display: inline-block;
+    height: 44px;
+    padding: 10px;
+    border-radius: 5px;
+    color: #7e7de1;
+}
+
+.file-upload {
+    margin-left: auto;
+    text-align: left;
+    padding: 10px;
+    /* border: 0.5px solid #c98483; */
+    border-radius: 5px;
+    width: 80%;
+    p{
+        margin: 0;
+        font-size: x-small;
+        color: #888;
+    }
+}
+.file-upload input[type="file"] {
+    width: 100%;
+    padding: 5px;
+    border: none;
+    background: transparent;
+}
+
+
+/* ----------------------------------------------------------- */
+/* -------------------    Java Script    --------------------- */
+/* ----------------------------------------------------------- */
+
+.password-wrapper {
+    width: 80%;
+    margin: auto;
+    position: relative;
+    display: block;
+}
+
+.password-wrapper input {
+    width: 100% ;
+    /* padding-right: 70px ; เว้นที่ให้ไอคอน */
+}
+
+.password-wrapper .match-status {
+  position: absolute;
+  right: 36px; /* ติ๊กถูกอยู่ก่อนตา */
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+}
+
+.password-wrapper .toggle-btn {
+  position: absolute;
+  right: 10px; /* ลูกตาอยู่ขวาสุด */
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  cursor: pointer;
+  color: #666;
+}
+
+.match-status {
+    position: absolute;
+    right: 38px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.1rem;
+}
+
+/* ----------------------------------------------------------- */
+/* ----------------------------------------------------------- */

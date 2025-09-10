@@ -1,0 +1,224 @@
+<?php
+session_start();
+require("../db.php");
+require("../vendor/autoload.php"); // dompdf
+date_default_timezone_set('Asia/Bangkok');
+
+use Dompdf\Dompdf;
+use Dompdf\Options;
+
+if (empty($_SESSION['user_type']) || $_SESSION['user_type'] !== 'staff') {
+    echo "<script>alert('Access Denied'); window.location='../home/index.php';</script>";
+    exit;
+}
+
+$booking_id = (int)($_GET['booking_id'] ?? 0);
+if ($booking_id <= 0) {
+    die("Invalid booking_id");
+}
+
+$emp_id   = (int)($_SESSION['employee_id'] ?? 0);
+$emp_name = $_SESSION['full_name'] ?? '-';
+
+$booking = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM bookings WHERE booking_id={$booking_id}"));
+if (!$booking) {
+    die("ไม่พบข้อมูลการจอง");
+}
+
+$user_id     = (int)$booking['user_id'];
+$car_id      = (int)$booking['car_id'];
+$pickup_date = $booking['start_date'];
+$return_date = $booking['end_date'];
+$total_price = (float)$booking['total_price'];
+
+$customer = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM customers WHERE user_id={$user_id}")) ?: [];
+$car      = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM cars WHERE car_id={$car_id}")) ?: [];
+
+// ป้องกันกดสร้างซ้ำ: ถ้ามี rentals ของ booking นี้แล้ว ไม่ให้สร้างเพิ่ม
+$chk = mysqli_query($conn, "SELECT rental_id, contract_file FROM rentals WHERE booking_id={$booking_id}");
+if ($row = mysqli_fetch_assoc($chk)) {
+    // มีแล้ว -> ส่งไฟล์เดิมให้ดาวน์โหลด
+    $existing = $row['contract_file'];
+    if ($existing && file_exists(__DIR__ . "/../contracts/" . $existing)) {
+        header("Content-Type: application/pdf");
+        header("Content-Disposition: attachment; filename=\"{$existing}\"");
+        readfile(__DIR__ . "/../contracts/" . $existing);
+        exit;
+    }
+    // ถ้าไม่มีไฟล์ ให้ผ่านไปสร้างใหม่
+}
+
+// ---------- สร้าง HTML สำหรับสัญญา ----------
+$today_th  = date('d/m/Y H:i');
+$car_name  = trim(($car['brand'] ?? '') . ' ' . ($car['model'] ?? ''));
+$license   = $car['license_plate'] ?? '-';
+// คำนวณล่วงหน้า
+$rate       = isset($booking['rate']) ? (float)$booking['rate'] : (float)($car['daily_rate'] ?? 0);
+$days       = max(1, (int)ceil((strtotime($return_date) - strtotime($pickup_date)) / (60 * 60 * 24)));
+$rent_total = $rate * $days;
+
+
+$html = <<<HTML
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { margin: 24mm 18mm; }
+  body { font-family: DejaVu Sans, 'TH Sarabun New', sans-serif; font-size: 14px; }
+  h1 { font-size: 22px; margin: 0 0 10px 0; }
+  h2 { font-size: 18px; margin: 18px 0 8px; }
+  .row{ display:flex; justify-content:space-between; }
+  .box{ border:1px solid #333; padding:10px; border-radius:6px; }
+  table { border-collapse: collapse; width:100%; }
+  td, th { padding:6px 8px; vertical-align: top; }
+  .muted{ color:#666; }
+  .sigline{ height:60px; border-bottom:1px dashed #999; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div><h1>สัญญาเช่ารถ JR Car Rental</h1></div>
+    <div class="muted">พิมพ์เมื่อ: {$today_th}</div>
+  </div>
+
+  <h2>1) ข้อมูลผู้เช่า</h2>
+  <table class="box">
+    <tr><td width="28%"><strong>ชื่อ-สกุล</strong></td><td>{$customer['firstname']} {$customer['lastname']}</td></tr>
+    <tr><td><strong>เบอร์โทร</strong></td><td>{$customer['phone_number']}</td></tr>
+    <tr><td><strong>อีเมล</strong></td><td>{$customer['email']}</td></tr>
+  </table>
+
+  <h2>2) รายการรถ</h2>
+  <table class="box">
+    <tr><td width="28%"><strong>รุ่นรถ</strong></td><td>{$car_name}</td></tr>
+    <tr><td><strong>ทะเบียน</strong></td><td>{$license}</td></tr>
+    <tr><td><strong>ช่วงเวลา</strong></td><td>{$pickup_date} ถึง {$return_date} (รวม {$days} วัน)</td></tr>
+    <tr><td><strong>อัตราวันละ</strong></td><td>{$rate} บาท/วัน</td></tr>
+  </table>
+
+  <h2>3) การชำระเงิน</h2>
+<table class="box">
+  <tr>
+    <td width="28%"><strong>ค่ามัดจำที่ชำระแล้ว</strong></td>
+    <td><strong>{$total_price}</strong> บาท</td>
+  </tr>
+  <tr>
+    <td><strong>ค่าเช่ารวม (ประมาณ)</strong></td>
+    <td>
+      {$rate} × {$days} = <strong>{$rent_total}</strong> บาท<br>
+      <span class="muted">(ชำระตอนคืนรถ โดยหักจากมัดจำ)</span>
+    </td>
+  </tr>
+</table>
+
+  <h2>4) เงื่อนไขโดยสรุป</h2>
+  <ol>
+    <li>ผู้เช่าต้องคืนรถตามเวลาที่กำหนด มิฉะนั้นอาจมีค่าปรับตามเงื่อนไขบริษัท</li>
+    <li>ห้ามสูบบุหรี่/ขนสัตว์ในรถ</li>
+    <li>ความเสียหายที่เกิดจากการใช้งานผิดปกติ ผู้เช่าต้องรับผิดชอบ</li>
+  </ol>
+
+  <h2>5) การส่งมอบรถ</h2>
+  <table class="box">
+    <tr><td width="28%"><strong>พนักงานส่งรถ</strong></td><td>{$emp_name}</td></tr>
+    <tr><td><strong>สถานที่ส่งมอบ</strong></td><td>{$booking['location']}</td></tr>
+    <tr><td><strong>วัน-เวลารับรถ</strong></td><td>{$pickup_date}</td></tr>
+  </table>
+
+  <h2>ลายเซ็น</h2>
+  <table>
+    <tr>
+      <td width="50%">
+        ผู้เช่า:
+        <div class="sigline"></div>
+        วันที่: ..........................
+      </td>
+      <td width="50%">
+        พนักงาน:
+        <div class="sigline"></div>
+        วันที่: ..........................
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+HTML;
+
+// ---------- สร้าง PDF ด้วย dompdf ----------
+$options = new Dompdf\Options();
+$options->set('isRemoteEnabled', true); // ให้โหลดฟอนต์/รูปจากภายนอกได้ถ้าจำเป็น
+$dompdf = new Dompdf\Dompdf($options);
+$dompdf->loadHtml($html, 'UTF-8');
+$dompdf->setPaper('A4', 'portrait');
+$dompdf->render();
+
+// บันทึกไฟล์ลงโฟลเดอร์
+$contractsDir = __DIR__ . '/../contracts/';
+if (!is_dir($contractsDir)) {
+    mkdir($contractsDir, 0755, true);
+}
+
+$fileName = "contract_{$booking_id}.pdf";
+file_put_contents($contractsDir . $fileName, $dompdf->output());
+
+// บันทึก rentals + เปลี่ยนสถานะรถเป็น rented (เริ่มเช่าจริงที่ทำสัญญา)
+mysqli_begin_transaction($conn);
+try {
+    // กันซ้ำ
+    $exists = mysqli_fetch_assoc(
+        mysqli_query($conn, "SELECT rental_id FROM rentals WHERE booking_id={$booking_id}")
+    );
+
+    if (!$exists) {
+        $sql = "INSERT INTO rentals
+            (booking_id, user_id, car_id, emp_deliver, actual_pickup_date, rental_status, total_amount, contract_file, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, 'active', ?, ?, NOW(), NOW())";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param(
+            $stmt,
+            'iiiisds',
+            $booking_id,
+            $user_id,
+            $car_id,
+            $emp_id,
+            $pickup_date,
+            // $total_amount,   // ⟵ ใช้ $rent_total ตามข้อ 1
+            $rent_total,   // ⟵ ใช้ $rent_total ตามข้อ 1
+            $fileName
+        );
+        if (!mysqli_stmt_execute($stmt)) {
+            throw new Exception(mysqli_stmt_error($stmt));
+        }
+    } else {
+        // อัปเดตเฉพาะไฟล์สัญญา
+        $up = mysqli_prepare($conn, "UPDATE rentals SET contract_file=?, updated_at=NOW() WHERE booking_id=?");
+        mysqli_stmt_bind_param($up, 'si', $fileName, $booking_id);
+        if (!mysqli_stmt_execute($up)) {
+            throw new Exception(mysqli_stmt_error($up));
+        }
+    }
+
+    // อัปเดตสถานะการจองให้ชัดเจน
+    $b1 = mysqli_prepare($conn, "UPDATE bookings SET booking_status='confirmed', payment_status='approved' WHERE booking_id=?");
+    mysqli_stmt_bind_param($b1, 'i', $booking_id);
+    if (!mysqli_stmt_execute($b1)) {
+        throw new Exception(mysqli_stmt_error($b1));
+    }
+
+    // เริ่มเช่าจริง → รถเป็น rented
+    $u2 = mysqli_prepare($conn, "UPDATE cars SET status='rented' WHERE car_id=?");
+    mysqli_stmt_bind_param($u2, 'i', $car_id);
+    if (!mysqli_stmt_execute($u2)) {
+        throw new Exception(mysqli_stmt_error($u2));
+    }
+
+    mysqli_commit($conn);
+} catch (Exception $e) {
+    mysqli_rollback($conn);
+    // เก็บ log ได้ตามสะดวก
+}
+
+// ส่งไฟล์ให้ดาวน์โหลดทันที
+$dompdf->stream($fileName, ['Attachment' => true]);
+exit;

@@ -1,0 +1,6 @@
+{
+    "require": {
+        "endroid/qr-code": "^6.0",
+        "promptpay/promptpay-qr": "^1.0"
+    }
+}

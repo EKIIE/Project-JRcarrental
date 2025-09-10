@@ -1,0 +1,82 @@
+jrcarweb/
+
+├── config/                          # ไฟล์การตั้งค่าและเชื่อมต่อฐานข้อมูล
+│   └── database.php                # การเชื่อมต่อฐานข้อมูล MySQL
+
+├── includes/                        # ไฟล์สำหรับองค์ประกอบส่วนรวมของ UI
+│   ├── header.php                 # ส่วนหัวของหน้าเว็บ
+│   ├── footer.php                 # ส่วนท้ายของหน้าเว็บ
+│   ├── navbar.php                 # เมนูนำทาง
+│   └── functions.php              # ฟังก์ชันที่ใช้ซ้ำในระบบ
+
+├── assets/                          # ไฟล์ Static เช่น CSS, JS, รูปภาพ
+│   ├── css/
+│   │   └── style.css              # Custom CSS
+│   ├── js/
+│   │   └── main.js                # JavaScript หลัก
+│   └── images/
+│       └── logo.png               # โลโก้บริษัท
+
+├── uploads/                         # ไฟล์ที่ผู้ใช้อัปโหลด
+│   ├── cars/                      # รูปภาพรถ
+│   └── users/                     # รูปโปรไฟล์ผู้ใช้งาน
+
+├── modules/                         # โมดูลหลักของระบบ
+│   ├── cars/                      # จัดการข้อมูลรถ
+│   │   ├── index.php              # รายการรถทั้งหมด
+│   │   ├── add.php                # เพิ่มรถใหม่
+│   │   ├── edit.php               # แก้ไขข้อมูลรถ
+│   │   ├── view.php               # รายละเอียดรถ
+│   │   └── delete.php             # ลบรถ
+
+│   ├── users/                   # ระบบจัดการผู้ใช้
+│   │   ├── index.php
+│   │   ├── add.php
+│   │   ├── edit.php
+│   │   └── delete.php
+
+│   ├── maintenance/               # บันทึกการบำรุงรักษารถ
+│   │   ├── index.php
+│   │   ├── add.php
+│   │   ├── edit.php
+│   │   └── delete.php
+
+│   ├── booking/                   # การจองรถ
+│   │   ├── index.php
+│   │   ├── add.php
+│   │   ├── edit.php
+│   │   └── delete.php
+
+│   ├── rental/                    # การเช่ารถ (หลังจากจอง)
+│   │   ├── index.php
+│   │   ├── add.php
+│   │   ├── edit.php
+│   │   └── delete.php
+
+│   ├── checkup/                   # ตรวจสอบสภาพรถหลังคืน
+│   │   ├── index.php
+│   │   ├── add.php
+│   │   ├── edit.php
+│   │   └── delete.php
+
+│   ├── payment/                   # ระบบจัดการการชำระเงิน
+│   │   ├── index.php
+│   │   ├── add.php
+│   │   ├── edit.php
+│   │   └── delete.php
+
+│   └── reports/                   # รายงานต่าง ๆ
+│       ├── index.php              # หน้ารวมรายงาน
+│       ├── cars_list.php          # รายงานรายชื่อรถ
+│       ├── rental_history.php     # รายงานประวัติการเช่า
+│       ├── car_mainten.php        # รายงานการเช็คสภาพ/เข้าศูนย์
+│       └── car_payment.php        # รายงานค่าใช้จ่ายรถ (ค่าผ่อน, ค่าประกัน)
+
+├── auth/                            # ระบบยืนยันตัวตน
+│   ├── login.php                  # หน้าล็อกอิน
+│   ├── logout.php                 # ออกจากระบบ
+│   └── check_auth.php             # ตรวจสอบสิทธิ์การเข้าถึง
+
+├── index.php                        # หน้าหลัก Dashboard
+├── .htaccess                        # ป้องกันการเข้าถึงไฟล์โดยตรง
+└── README.md                        # คำอธิบายโปรเจกต์

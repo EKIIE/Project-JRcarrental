@@ -1,0 +1,261 @@
+<?php
+include("../db.php");
+session_start();
+
+if (!isset($_SESSION['user_id'])) {
+  header("Location: auth/login.php");
+  exit();
+}
+
+$user_id = (int)$_SESSION['user_id'];
+
+// โชว์เฉพาะการจองที่ยังเกี่ยวข้อง: pending/confirmed (ตัด cancelled) // NEW
+$sql = "SELECT 
+          b.*,
+          c.brand, c.model, c.image_path, c.daily_rate,
+          r.rental_id, r.emp_deliver,
+          e.firstname AS emp_fname, e.lastname AS emp_lname,
+          e.phone_number AS emp_phone, e.email AS emp_email
+        FROM bookings b
+        JOIN cars c ON b.car_id = c.car_id
+        LEFT JOIN rentals r ON r.rental_id = (
+          SELECT r2.rental_id 
+          FROM rentals r2 
+          WHERE r2.booking_id = b.booking_id 
+          ORDER BY r2.rental_id DESC 
+          LIMIT 1
+        )
+        LEFT JOIN employees e ON e.employee_id = r.emp_deliver
+        WHERE b.user_id = ?
+          AND b.booking_status IN ('pending','confirmed')
+        ORDER BY b.created_at DESC";
+
+$stmt = mysqli_prepare($conn, $sql);
+if (!$stmt) {
+  die("Prepare failed: " . mysqli_error($conn));
+}
+mysqli_stmt_bind_param($stmt, 'i', $user_id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+?>
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <title>ประวัติการจอง</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* สไตล์การ์ดให้โทนเดียวกับเพจอื่น ๆ แบบเรียบ สะอาด */
+    /* NEW */
+    .booking-card {
+      border: 1px solid #eef0f2;
+      border-radius: 16px;
+      overflow: hidden;
+      transition: transform .15s ease, box-shadow .15s ease;
+      background: #fff;
+    }
+
+    .booking-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, .06);
+    }
+
+    .booking-img {
+      height: 200px;
+      object-fit: cover;
+    }
+
+    .badge-soft {
+      background: #f2f6ff;
+      color: #1b4fd1;
+    }
+
+    .list-mini {
+      margin: 0;
+      padding-left: 1rem;
+      color: #555;
+    }
+
+    .list-mini li {
+      margin-bottom: .15rem;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAVBAR +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="index.php">JR Car Rental</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="../index.php">หน้าหลัก</a>
+          </li>
+
+          <?php if (!isset($_SESSION['user_type'])): ?>
+            <li class="nav-item"><a class="nav-link" href="auth/register.php">สมัครสมาชิก</a></li>
+            <li class="nav-item"><a class="nav-link" href="auth/login.php">เข้าสู่ระบบ</a></li>
+
+          <?php elseif ($_SESSION['user_type'] == 'customer'): ?>
+            <li class="nav-item"><a class="nav-link active" href="booking_history.php">ประวัติการจอง</a></li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">บัญชีของฉัน</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="../profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
+                <li><a class="dropdown-item" href="../auth/logout.php">ออกจากระบบ</a></li>
+              </ul>
+            </li>
+
+          <?php elseif ($_SESSION['user_type'] == 'staff'): ?>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">เมนูพนักงาน</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="../staff/checkup.php">ตรวจสอบรถ</a></li>
+                <li><a class="dropdown-item" href="../staff/return_car.php">รับคืนรถ</a></li>
+                <li><a class="dropdown-item" href="../profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
+                <li><a class="dropdown-item" href="../auth/logout.php">ออกจากระบบ</a></li>
+              </ul>
+            </li>
+
+          <?php elseif ($_SESSION['user_type'] == 'admin'): ?>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">ผู้ดูแลระบบ</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="../admin/dashboard.php">แดชบอร์ด</a></li>
+                <li><a class="dropdown-item" href="../admin/manage_staff.php">จัดการพนักงาน</a></li>
+                <li><a class="dropdown-item" href="../admin/manage_cars.php">จัดการรถ</a></li>
+                <li><a class="dropdown-item" href="../admin/manage_bookings.php">จัดการการจอง</a></li>
+                <li><a class="dropdown-item" href="../profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
+                <li><a class="dropdown-item" href="../auth/logout.php">ออกจากระบบ</a></li>
+              </ul>
+            </li>
+          <?php endif; ?>
+
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <!-- NAVBAR +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+  <div class="container py-5">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h2 class="mb-0">ประวัติการจองของคุณ</h2>
+      <!-- <span class="badge badge-soft rounded-pill px-3 py-2">เฉพาะรายการที่กำลังใช้งาน / รอดำเนินการ</span> -->
+    </div>
+
+    <?php if (mysqli_num_rows($result) == 0): ?>
+      <div class="alert alert-info">ยังไม่มีการจอง</div>
+    <?php else: ?>
+      <div class="row row-cols-1 row-cols-md-2 g-4">
+        <?php while ($row = mysqli_fetch_assoc($result)): ?>
+          <?php
+          $d1 = new DateTime($row['start_date']);
+          $d2 = new DateTime($row['end_date']);
+          $days = max(1, $d1->diff($d2)->days);
+          $rentTotal = (float)$row['daily_rate'] * $days;
+
+          $status = $row['booking_status'] ?? 'pending';
+          $badge = match ($status) {
+            'pending'   => 'warning',
+            'confirmed' => 'success',
+            default     => 'secondary',
+          };
+
+          $carImg = '../uploads/cars/' . $row['image_path'];
+          $empFull = trim(($row['emp_fname'] ?? '') . ' ' . ($row['emp_lname'] ?? ''));
+          $hasEmp  = ($status === 'confirmed' && !empty($row['emp_deliver']));
+          $modalId = 'empModal' . $row['booking_id'];
+          ?>
+          <div class="col">
+            <div class="booking-card h-100">
+              <img src="<?= htmlspecialchars($carImg) ?>" class="booking-img w-100" alt="">
+              <div class="p-3 p-md-4">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <h5 class="mb-1"><?= htmlspecialchars($row['brand'] . ' ' . $row['model']) ?></h5>
+                  <span class="badge bg-<?= $badge ?> text-capitalize"><?= htmlspecialchars($status) ?></span>
+                </div>
+
+                <ul class="list-mini">
+                  <li><strong>วันที่เริ่มเช่า:</strong> <?= $d1->format('d/m/Y') ?></li>
+                  <li><strong>วันที่คืน:</strong> <?= $d2->format('d/m/Y') ?></li>
+                  <li>
+                    <strong>ค่าเช่า <?= $days ?> วัน:</strong>
+                    <?= number_format($rentTotal, 2) ?> บาท
+                    <small class="text-muted">(<?= number_format($row['daily_rate']) ?> บาท/วัน)</small>
+                  </li>
+                  <li><strong>มัดจำ:</strong> <?= number_format($row['total_price'], 2) ?> บาท</li>
+                </ul>
+
+                <button class="btn btn-primary btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#<?= $modalId ?>">
+                  ดูข้อมูลพนักงาน
+                </button>
+
+                <div class="text-muted small mt-3">จองเมื่อ: <?= date('d/m/Y H:i', strtotime($row['created_at'])) ?></div>
+              </div>
+            </div>
+          </div>
+
+            <!-- Modal ข้อมูลพนักงาน -->
+            <div class="modal fade" id="<?= $modalId ?>" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">ข้อมูลพนักงานที่ส่งรถ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <?php if (!empty($row['emp_deliver'])): ?>
+                      <div class="mb-2"><strong>ชื่อ-นามสกุล:</strong> <?= htmlspecialchars($empFull) ?></div>
+                      <div class="mb-2"><strong>เบอร์โทร:</strong> <?= htmlspecialchars($row['emp_phone'] ?? '-') ?></div>
+                      <div class="mb-2"><strong>อีเมล:</strong> <?= htmlspecialchars($row['emp_email'] ?? '-') ?></div>
+                      <hr>
+                      <div class="small text-muted">
+                        หากต้องการเปลี่ยนเวลานัดรับ-ส่งรถ กรุณาติดต่อพนักงานโดยตรง หรือฝ่ายบริการลูกค้า
+                      </div>
+                    <?php else: ?>
+                      <div class="alert alert-warning text-center">
+                        ยังไม่มีพนักงานยืนยันการจอง
+                      </div>
+                    <?php endif; ?>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">ปิด</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+        <?php endwhile; ?>
+      </div>
+    <?php endif; ?>
+  </div>
+
+  <?php include("../includes/footer.php"); ?>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <?php if (!empty($_GET['new'])): ?>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'บันทึกการจองเรียบร้อย',
+          showConfirmButton: false,
+          timer: 2000
+        });
+      });
+    </script>
+  <?php endif; ?>
+
+</body>
+
+</html>

@@ -1,0 +1,169 @@
+<?php
+require('../db.php');
+session_start();
+date_default_timezone_set('Asia/Bangkok');
+
+$booking_id = (int)($_GET['booking_id'] ?? 0);
+if ($booking_id <= 0) {
+    die("Missing booking_id");
+}
+
+$sql = "SELECT 
+  r.*, b.start_date, b.end_date, 
+  c.brand, c.model, c.license_plate, c.daily_rate, c.deposit,
+  cus.firstname, cus.lastname, cus.phone_number, cus.email
+FROM rentals r
+JOIN bookings b ON r.booking_id = b.booking_id
+JOIN cars c ON r.car_id = c.car_id
+JOIN customers cus ON r.user_id = cus.user_id
+WHERE r.booking_id = $booking_id
+LIMIT 1";
+
+$result = mysqli_query($conn, $sql);
+$data = mysqli_fetch_assoc($result);
+
+if (!$data) {
+    die("ไม่พบข้อมูลการเช่า");
+}
+?>
+
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <title>สัญญาเช่ารถ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            padding: 40px;
+        }
+
+        .contract-box {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .border-bottom {
+            border-bottom: 1px solid #000;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .sign-box {
+            height: 80px;
+            border-bottom: 1px solid #000;
+            width: 250px;
+            margin-top: 40px;
+        }
+
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="contract-box">
+        <!-- ส่วนหัว -->
+        <div class="header-section border-bottom">
+            <div style="margin-left: 5%;">
+                <h5>ใบสัญญาเช่ารถยนต์</h5>
+                <small>Rental <?= $data['rental_id'] ?> | เลขประจำตัวผู้เสียภาษี 1201000003473</small><br>
+                <small>38 ซ.12 ถ.มหาโชค ต.ป่าตัน อ.เมือง จ.เชียงใหม่ 50300</small>
+            </div>
+            <div>
+                <img src="../img/jrlogo4.jpg" alt="JR Logo" height="70">
+            </div>
+        </div>
+
+        <!-- ข้อมูล 3 ส่วน -->
+        <table stayle="width: 100%;">
+            <tr>
+                <td style="width: 33%; vertical-align: top;">
+                    <h6>ข้อมูลผู้เช่า</h6>
+                    ชื่อ: <?= $data['firstname'] . ' ' . $data['lastname'] ?><br>
+                    โทร: <?= $data['phone_number'] ?><br>
+                    อีเมล: <?= $data['email'] ?>
+                </td>
+
+                <td style="width: 33%; vertical-align: top;">
+                    <h6>ข้อมูลรถที่เช่า</h6>
+                    ยี่ห้อ / รุ่น: <?= $data['brand'] . ' ' . $data['model'] ?><br>
+                    ทะเบียน: <?= $data['license_plate'] ?><br>
+                    รับรถ: <?= date('j F Y', strtotime($data['actual_pickup_date'])) ?><br>
+                    คืนรถ: <?= date('j F Y', strtotime($data['end_date'])) ?>
+                </td>
+
+                <td style="width: 33%; vertical-align: top; text-align: right;">
+                    <h6>รายละเอียดราคา</h6>
+                    ค่าบริการ: <?= number_format($data['total_amount'], 2) ?> บาท<br>
+                    มัดจำ: <?= number_format($data['deposit'], 2) ?> บาท<br>
+                    รวมทั้งหมด: <?= number_format($data['total_amount'] + $data['deposit'], 2) ?> บาท
+                </td>
+            </tr>
+        </table>
+
+        <!-- เงื่อนไข -->
+        <div class="mt-4">
+            <div class="section-title">เงื่อนไขการเช่า</div>
+            <ol>
+                <li>ผู้เช่าจะต้องรับผิดชอบหากรถเกิดความเสียหาย...</li>
+                <small>lolem</small>
+                <li>บริษัทขอสงวนสิทธิ์ไม่คืนเงินในกรณีคืนก่อนกำหนด...</li>
+                <small>lolem</small>
+                <li>รถต้องคืนพร้อมน้ำมันเต็มถัง...</li>
+                <small>lolem</small>
+                <li>สัญญาข้อที่...</li>
+                <small>lolem</small>
+                <li>สัญญาข้อที่...</li>
+                <small>lolem</small>
+                <li>สัญญาข้อที่...</li>
+                <small>lolem</small>
+                <li>สัญญาข้อที่...</li>
+                <small>lolem</small>
+            </ol>
+        </div>
+
+        <div style="justify-content: flex-end;">
+            <!-- ลายเซ็น -->
+            <div class="row mt-5">
+                <div class="col-6 text-center">
+                    <div class="sign-box"></div>
+                    <small>ลายเซ็นผู้เช่า</small>
+                </div>
+                <div class="col-6 text-center">
+                    <div class="sign-box"></div>
+                    <small>ลายเซ็นผู้ให้เช่า</small>
+                </div>
+            </div>
+            
+            <div class="mt-4 text-end">
+                <small>วันที่พิมพ์เอกสาร: <?= date('d/m/Y') ?></small>
+            </div>
+            
+            <div class="text-center no-print mt-4">
+                <button onclick="window.print()" class="btn btn-primary">พิมพ์ / บันทึก PDF</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

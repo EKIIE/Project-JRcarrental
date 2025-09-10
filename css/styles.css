@@ -1,0 +1,132 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai&display=swap');
+
+/* ตั้งค่าโครงสร้างหลัก */
+body {
+    /* font-family: 'Arial', sans-serif; */
+    background: #fff8ec; /* สีพื้นหลัง */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+
+    /* font */
+    font-family: "Noto Sans Thai", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    font-variation-settings:
+    "wdth" 100;
+}
+
+/* กล่อง Login */
+.login-container {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    width: 350px;
+    color: #c98483; /* สีข้อความ */
+}
+
+/* หัวข้อ */
+h1 {
+    color: #c98483;
+    margin-bottom: 10px;
+}
+
+/* ช่องใส่ข้อความ */
+input[type="text"], input[type="password"] {
+    width: 80%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #c98483;
+    border-radius: 5px;
+}
+
+/* ปุ่ม Login */
+button {
+    width: 30%;
+    height: auto;
+    padding: 10px;
+    background: #c98483;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+button:hover {
+    background: #a1625c;
+}
+
+a {
+    color: #c98483;
+    width: 30%;
+    text-decoration: none;
+}
+a:hover {
+    color: #7a5451;
+    transition: all 0.3s;
+}
+.iidiv{
+    /* grid-column: auto ; */
+    text-align: center;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 10px;
+    font-size: 16px;
+    /* box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); */
+    
+}
+.iidiv a,a:hover {
+    color: #7a5451;
+    height: 44px;
+    padding: 10px;
+    margin: auto;
+    margin-top: 20px;
+    /* border: #7a5451 solid 1px; */
+    border-radius: 5px;
+    /* transition: 0.3s; */
+}
+
+.admin-panel {
+    width: 80%;
+    margin: 50px auto;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    text-align: center;
+}
+h1 {
+    color: #a1625c;
+    margin-bottom: 30px;
+}
+.admin-options {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+.admin-box {
+    background-color: #fffaf2;
+    border: 2px solid #e3c4b8;
+    padding: 30px;
+    border-radius: 10px;
+    width: 250px;
+    transition: 0.3s;
+}
+.admin-box:hover {
+    background-color: #fbeee5;
+    transform: scale(1.05);
+}
+.admin-box a {
+    text-decoration: none;
+    font-weight: bold;
+    color: #a1625c;
+    font-size: 18px;
+}
