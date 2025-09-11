@@ -1,5 +1,5 @@
 <?php
-session_start(); require("../../db.php");
+session_start(); require("../db.php");
 header("Content-Type: text/html; charset=utf-8");
 if (empty($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') { http_response_code(403); exit('Forbidden'); }
 

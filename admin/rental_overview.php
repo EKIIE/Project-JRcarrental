@@ -277,7 +277,7 @@ mysqli_stmt_close($st);
     document.getElementById('modalCheckups').addEventListener('show.bs.modal', ev => {
       const rid = ev.relatedTarget?.getAttribute('data-rental');
       if (!rid) return;
-      fetch('../api/rental_overview_checkups.php?rental_id=' + encodeURIComponent(rid))
+      fetch('../api/overview_checkups.php?rental_id=' + encodeURIComponent(rid))
         .then(r => r.text()).then(html => {
           document.getElementById('checkupsBody').innerHTML = html;
         })
