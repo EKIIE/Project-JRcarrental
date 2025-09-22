@@ -83,6 +83,30 @@ $qrUrl = "https://promptpay.io/{$promptpay}/{$amountFormatted}.png";
       .receipt {
         box-shadow: none;
       }
+
+      .receipt .no-break {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      .print-row {
+        display: block !important;
+        width: 100% !important;
+      }
+
+      .print-col-left {
+        float: left !important;
+        width: 50% !important;
+      }
+
+      .print-col-right {
+        float: right !important;
+        width: 50% !important;
+      }
+      .print-col-bottom {
+        clear: both !important;
+        width: 100% !important;
+      }
     }
   </style>
 </head>
@@ -100,42 +124,82 @@ $qrUrl = "https://promptpay.io/{$promptpay}/{$amountFormatted}.png";
     </div>
     <hr>
 
-    <div class="row">
-      <div class="col-md-6">
+    <div class="row g-4 no-break print-row">
+      <div class="col-md-6 print-col-left">
         <h5>ข้อมูลลูกค้า</h5>
         <div>ชื่อ: <?= htmlspecialchars($rec['firstname'] . ' ' . $rec['lastname']) ?></div>
         <div>โทร: <?= htmlspecialchars($rec['phone_number']) ?></div>
         <div>อีเมล: <?= htmlspecialchars($rec['email']) ?></div>
-      </div>
-      <div class="col-md-6">
+        <!-- </div> -->
+        <!-- <hr class="my-3"> -->
+        <br>
+        <!-- <div class="col-md-3"> -->
         <h5>ข้อมูลรถ</h5>
         <div><?= htmlspecialchars($rec['brand'] . ' ' . $rec['model']) ?> | <?= htmlspecialchars($rec['license_plate']) ?></div>
         <div>ช่วงเช่า: <?= date('d/m/Y', strtotime($rec['start_date'])) ?> - <?= date('d/m/Y', strtotime($rec['end_date'])) ?> (<?= $days ?> วัน)</div>
         <div>ตรวจคืนเมื่อ: <?= date('d/m/Y H:i', strtotime($rec['checkup_date'])) ?></div>
       </div>
+      <div class="col-md-6 print-col-right">
+        <!-- <hr> -->
+        <h5>รายละเอียดค่าปรับ</h5>
+        <ul>
+          <?php if ($rec['fuel_notfull']): ?>
+            <li>น้ำมันไม่เต็ม (+<?= number_format(2000, 2) ?> บาท)</li>
+          <?php endif; ?>
+          <?php if ($rec['tire_damaged']): ?>
+            <li>ยางรถเสียหาย (+<?= number_format(3500, 2) ?> บาท)</li>
+          <?php endif; ?>
+          <?php if ($rec['key_lost']): ?>
+            <li>กุญแจรถหาย (+<?= number_format(3500, 2) ?> บาท)</li>
+          <?php endif; ?>
+          <?php if ($rec['smell_detected']): ?>
+            <li>พบกลิ่นบุหรี่หรือขนสัตว์ (+<?= number_format(3000, 2) ?> บาท)</li>
+          <?php endif; ?>
+          <?php if ($rec['late_return']): ?>
+            <li>คืนรถหลังเวลา 12:00 น. (+<?= number_format($rec['daily_rate'], 2) ?> บาท)</li>
+          <?php endif; ?>
+          <?php if (!empty($rec['damage_notes'])): ?>
+            <li>หมายเหตุเพิ่มเติม: <?= htmlspecialchars($rec['damage_notes']) ?></li>
+          <?php endif; ?>
+
+          <?php if (
+            !$rec['fuel_notfull'] &&
+            !$rec['tire_damaged'] &&
+            !$rec['key_lost'] &&
+            !$rec['smell_detected'] &&
+            !$rec['late_return'] &&
+            empty($rec['damage_notes'])
+          ): ?>
+            <li>ไม่มีค่าปรับ</li>
+          <?php endif; ?>
+        </ul>
+
+      </div>
     </div>
 
-    <hr>
-    <h5>สรุปยอด</h5>
-    <div class="table-responsive">
-      <table class="table table-sm align-middle">
-        <tr>
-          <td>ค่าบริการ (<?= number_format($rec['daily_rate'], 2) ?> × <?= $days ?> วัน)</td>
-          <td class="text-end"><?= number_format($base_rent, 2) ?></td>
-        </tr>
-        <tr>
-          <td>ค่าปรับ / ค่าเสียหาย</td>
-          <td class="text-end"><?= number_format($penalty, 2) ?></td>
-        </tr>
-        <tr>
-          <td>หักมัดจำ</td>
-          <td class="text-end text-danger">-<?= number_format($deposit, 2) ?></td>
-        </tr>
-        <tr class="table-light">
-          <th>ยอดสุทธิที่ต้องจ่าย</th>
-          <th class="text-end"><?= number_format($amount_due, 2) ?> บาท</th>
-        </tr>
-      </table>
+    <div class="no-break print-row mt-3 print-col-bottom">
+      <hr>
+      <h5>สรุปยอด</h5>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <tr>
+            <td>ค่าบริการ (<?= number_format($rec['daily_rate'], 2) ?> × <?= $days ?> วัน)</td>
+            <td class="text-end"><?= number_format($base_rent, 2) ?></td>
+          </tr>
+          <tr>
+            <td>ค่าปรับ / ค่าเสียหาย</td>
+            <td class="text-end"><?= number_format($penalty, 2) ?></td>
+          </tr>
+          <tr>
+            <td>หักมัดจำ</td>
+            <td class="text-end text-danger">-<?= number_format($deposit, 2) ?></td>
+          </tr>
+          <tr class="table-light">
+            <th>ยอดสุทธิที่ต้องจ่าย</th>
+            <th class="text-end"><?= number_format($amount_due, 2) ?> บาท</th>
+          </tr>
+        </table>
+      </div>
     </div>
 
     <?php if ($amount_due <= 0): ?>
@@ -149,16 +213,16 @@ $qrUrl = "https://promptpay.io/{$promptpay}/{$amountFormatted}.png";
           <div><a class="btn btn-outline-secondary btn-sm" href="../uploads/slips/<?= htmlspecialchars($slip) ?>" target="_blank">ดูสลิป</a></div>
         <?php endif; ?>
       <?php else: ?>
-        <div class="row g-4">
+        <div class="row g-4 no-break print-row print-col-left">
           <div class="col-md-6">
             <h6 class="mb-2">ชำระด้วย QR พร้อมเพย์</h6>
             <div class="qrb">
-              <img src="<?= $qrUrl ?>" alt="PromptPay QR" width="260" height="260">
+              <img src="<?= $qrUrl ?>" alt="PromptPay QR" width="200" height="200">
               <div class="small text-center mt-2 text-muted">สแกนจ่าย: <?= number_format($amount_due, 2) ?> บาท</div>
             </div>
             <div class="small text-muted mt-2">เบอร์พร้อมเพย์: <?= htmlspecialchars($promptpay) ?></div>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-6 no-print">
             <h6 class="mb-2">อัปโหลดสลิปโอน</h6>
             <form class="border p-3 rounded" method="post" enctype="multipart/form-data" action="chk_pay.php">
               <input type="hidden" name="checkup_id" value="<?= $checkup_id ?>">
@@ -180,7 +244,7 @@ $qrUrl = "https://promptpay.io/{$promptpay}/{$amountFormatted}.png";
       <?php endif; ?>
     <?php endif; ?>
 
-    <hr>
+    <!-- <hr> -->
     <div class="d-flex gap-2 no-print">
       <button class="btn btn-secondary" onclick="window.print()">พิมพ์ใบเสร็จ</button>
       <a class="btn btn-outline-dark" href="staff_dashboard.php">กลับแดชบอร์ด</a>

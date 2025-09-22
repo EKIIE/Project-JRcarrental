@@ -43,8 +43,8 @@ $end_date   = new DateTime($rental['end_date']);
 // ===========================
 $PENALTY_FUEL_NOT_FULL = 2000.00;
 $PENALTY_TIRE_DMG      = 3500.00;
-$PENALTY_KEY_LOST      = 3000.00;
-$PENALTY_SMELL         = 2500.00;
+$PENALTY_KEY_LOST      = 3500.00;
+$PENALTY_SMELL         = 3000.00;
 // คืนหลังเที่ยง (late_return) => ชาร์จเพิ่ม 1 วันของ daily_rate
 $LATE_ADD_DAYS         = 1;
 
