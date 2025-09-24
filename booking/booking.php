@@ -14,7 +14,7 @@ if (!$car) {
   exit();
 }
 
-$deposit = $car['deposit'];
+// $deposit = $car['deposit'];
 ?>
 
 <!-- NAVBAR +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
@@ -102,6 +102,14 @@ $deposit = $car['deposit'];
   <meta charset="UTF-8">
   <title>จองรถ - <?= $car['brand'] ?> <?= $car['model'] ?></title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Pikaday CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
+  <!-- Moment.js for better date format (optional) -->
+  <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+  <!-- Pikaday JS -->
+  <script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
+
 </head>
 
 <body>
@@ -113,27 +121,49 @@ $deposit = $car['deposit'];
         <?php $carImg = "../uploads/cars/" . $car['image_path']; ?>
         <img src="<?= $carImg ?>" class="img-fluid" alt="car image">
 
-        <p class="mt-3"><strong>ค่าบริการ:</strong> <?= number_format($car['daily_rate']) ?> บาท/วัน</p>
-        <p class="mt-1">
-          <strong>ค่ามัดจำ:</strong> <?= number_format($deposit) ?> บาท
-          <small class="text-muted">ชำระตอนจอง</small>
-        </p>
+
+        <p class="mt-3"><strong>ค่าบริการ:</strong> <?= number_format($car['daily_rate']) ?> บาท/วัน </p>
+        <!-- <p class="mt-3"><strong>ค่ามัดจำ:</strong> 20%</p> -->
         <p><strong>รายละเอียด:</strong> <?= $car['description'] ?></p>
       </div>
       <div class="col-md-6">
         <form method="post" action="payment_qr.php">
           <input type="hidden" name="car_id" value="<?= $car['car_id'] ?>">
           <input type="hidden" name="rate" value="<?= $car['daily_rate'] ?>">
-          <input type="hidden" name="deposit" value="<?= $deposit ?>">
 
           <div class="mb-3">
-            <label>วันที่เริ่มเช่า</label>
-            <input type="date" name="start_date" id="start_date" class="form-control" required>
+            <label>เลือกวันที่เริ่มเช่า</label>
+            <input type="text" name="start_date" id="start_date" class="form-control">
+            <!-- <input type="date" name="start_date" id="start_date" class="form-control" required> -->
           </div>
           <div class="mb-3">
-            <label>วันที่คืนรถ</label>
-            <input type="date" name="end_date" id="end_date" class="form-control" required>
+            <label>เลือกวันที่คืนรถ</label>
+            <input type="text" name="end_date" id="end_date" class="form-control">
+            <!-- <input type="date" name="end_date" id="end_date" class="form-control" required> -->
           </div>
+          <script>
+            const pickerStart = new Pikaday({
+              field: document.getElementById('start_date'),
+              format: 'YYYY-MM-DD',
+              minDate: new Date(),
+              onSelect: function(date) {
+                pickerEnd.setMinDate(date); // ป้องกันเลือกวันคืนก่อนวันรับ
+              }
+            });
+
+            const pickerEnd = new Pikaday({
+              field: document.getElementById('end_date'),
+              format: 'YYYY-MM-DD',
+              minDate: new Date(),
+            });
+          </script>
+
+
+          <div class="mb-3">
+            <label for="pickup_time">เลือกเวลา (เวลาทำการ 6.00-18.00 เท่านั้น)</label>
+            <input type="time" name="pickup_time" id="pickup_time" class="form-control" min="06:00" max="18:00" required>
+          </div>
+
 
           <div class="mb-3">
             <label for="location" class="form-label">สถานที่รับ-คืนรถ</label>
@@ -144,25 +174,28 @@ $deposit = $car['deposit'];
               <option value="ปั๊มปตทข้างสนามบิน">ปั๊มปตทข้างสนามบิน</option>
             </select>
           </div>
+
+
           <div class="mb-3">
             <label for="note" class="form-label">หมายเหตุ (ถ้ามี)</label>
             <textarea name="note" id="note" class="form-control" rows="3" placeholder="หมายเหตุ...."></textarea>
           </div>
 
+
           <div class="mb-3">
-            <label>ค่ามัดจำรถ</label>
-            <input type="text" id="total_price" class="form-control" readonly>
+            <!-- <label>ค่ามัดจำ 20% </label> -->
+            <input type="hidden" id="total_price" class="form-control" readonly>
             <input type="hidden" name="total_price" id="hidden_total">
           </div>
 
-          <!-- สรุปรายการ -->
+
           <div id="breakdown" class="border rounded p-3 bg-light mb-3" style="display:none">
             <div class="d-flex justify-content-between">
               <span>ค่ามัดจำ</span>
               <strong id="bd_deposit"></strong>
             </div>
             <div class="d-flex justify-content-between">
-              <span>ค่าเช่า <span id="bd_days"></span> วัน (ชำระวันคืนรถ)</span>
+              <span>ค่าเช่า <span id="bd_days"></span> วัน</span>
               <strong id="bd_rent_total"></strong>
             </div>
             <hr class="my-2">
@@ -171,6 +204,7 @@ $deposit = $car['deposit'];
               <strong id="bd_paynow" class="text-success"></strong>
             </div>
           </div>
+
 
           <button type="submit" class="btn btn-success">ยืนยันการจอง</button>
         </form>
@@ -182,7 +216,6 @@ $deposit = $car['deposit'];
 
   <script>
     const rate = <?= (float)$car['daily_rate'] ?>;
-    const deposit = <?= (float)$deposit ?>;
 
     const start = document.getElementById('start_date');
     const end = document.getElementById('end_date');
@@ -192,7 +225,6 @@ $deposit = $car['deposit'];
     const bd = {
       box: document.getElementById('breakdown'),
       deposit: document.getElementById('bd_deposit'),
-      rate: document.getElementById('bd_rate'),
       days: document.getElementById('bd_days'),
       rentTotal: document.getElementById('bd_rent_total'),
       paynow: document.getElementById('bd_paynow'),
@@ -214,21 +246,18 @@ $deposit = $car['deposit'];
         const diff = Math.ceil((d2 - d1) / msPerDay);
         const days = Math.max(1, diff);
 
-        // เงินที่ต้องจ่ายตอนนี้ = ค่ามัดจำเท่านั้น
-        const payNow = deposit;
-
         // ค่าเช่ารวม (แสดงไว้เฉยๆ ยังไม่เก็บตอนนี้)
         const rentTotal = rate * days;
+        const deposit = Math.ceil(rentTotal * 0.2);
 
         // อัปเดต UI
-        total.value = numberFmt(payNow) + ' บาท';
-        hiddenTotal.value = payNow;
+        total.value = numberFmt(deposit) + ' บาท';
+        hiddenTotal.value = deposit;
 
         bd.deposit.textContent = numberFmt(deposit) + ' บาท';
-        // bd.rate.textContent = numberFmt(rate) + ' บาท/วัน';
         bd.days.textContent = days;
         bd.rentTotal.textContent = numberFmt(rentTotal) + ' บาท';
-        bd.paynow.textContent = numberFmt(payNow) + ' บาท';
+        bd.paynow.textContent = numberFmt(deposit) + ' บาท';
         bd.box.style.display = 'block';
 
         // เก็บ days เพิ่มไปกับฟอร์ม (ถ้ายังไม่มีให้เพิ่ม input hidden)

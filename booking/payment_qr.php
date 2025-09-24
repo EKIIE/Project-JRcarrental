@@ -6,7 +6,7 @@ date_default_timezone_set('Asia/Bangkok');
 // --- รับค่าจากฟอร์ม (cast + trim) ---
 $car_id   = isset($_POST['car_id'])   ? (int)$_POST['car_id'] : 0;
 $rate     = isset($_POST['rate'])     ? (float)$_POST['rate'] : 0;
-$deposit  = isset($_POST['deposit'])  ? (float)$_POST['deposit'] : 0;
+// $deposit  = isset($_POST['deposit'])  ? (float)$_POST['deposit'] : 0;
 $start    = isset($_POST['start_date']) ? trim($_POST['start_date']) : '';
 $end      = isset($_POST['end_date'])   ? trim($_POST['end_date'])   : '';
 $location = isset($_POST['location'])   ? trim($_POST['location'])   : '';
@@ -23,10 +23,12 @@ $diffDays = (int)$d1->diff($d2)->days;
 $days = max(1, $diffDays);
 
 // --- ยอดที่ต้องจ่ายตอนนี้ = มัดจำเท่านั้น (ห้ามใช้ค่าจาก POST) ---
+$rent_total = $rate * $days; // ค่าเช่ารวม
+$bd_paynow = 0.20 * $rent_total; // มัดจำ 20%
 $pay_now = (float)$deposit;
 
 // --- กันยอดเป็น 0 ---
-if ($pay_now <= 0) {
+if ($bd_paynow <= 0) {
     die('จำนวนเงินมัดจำต้องมากกว่า 0');
 }
 
@@ -40,7 +42,7 @@ $_SESSION['temp_booking'] = [
     'location'    => $location,
     'note'        => $note,
     'days'        => $days,
-    'total_price' => $pay_now,           // ชำระตอนนี้ (มัดจำ)
+    'total_price' => $bd_paynow,           // ชำระตอนนี้ (มัดจำ)
     'rent_total'  => $rate * $days       // ค่าเช่ารวม (ชำระตอนคืนรถ)
 ];
 
@@ -66,7 +68,7 @@ $expires_at = $_SESSION['expires_at'];
 
 <body class="text-center py-5">
     <h2>สแกนเพื่อชำระเงิน</h2>
-    <p><strong><?= number_format($pay_now, 2) ?> บาท</strong></p>
+    <p><strong><?= number_format($bd_paynow, 2) ?> บาท</strong></p>
 
     <img src="generate_qr.php" width="300" class="mb-3" alt="PromptPay QR">
 
