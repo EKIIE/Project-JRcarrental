@@ -81,8 +81,11 @@ $deposit20   = $rent_total * 0.20; // มัดจำ 20%
         .mt-5 {
             margin-top: 0.2rem !important;
         }
+
         .mt-6 {
-            margin-top: 0.5rem !important;
+            margin-top: -0.5rem !important;
+            font-size: 0.8rem;
+            margin-bottom: 0.2rem;
         }
 
         h6 {
@@ -110,6 +113,9 @@ $deposit20   = $rent_total * 0.20; // มัดจำ 20%
 <body class="bg-light">
     <!-- <div class="receipt bg-white shadow-sm p-4 my-4 rounded-3"> -->
     <div class="contract-box">
+        <div class="mt-6 text-end">
+            <small>Date/วันที่: <?= date('d/m/Y') ?></small>
+        </div>
         <!-- ส่วนหัว -->
         <!-- <div class="d-flex justify-content-between align-items-start"> -->
         <div class="header-section border-bottom">
@@ -288,9 +294,6 @@ $deposit20   = $rent_total * 0.20; // มัดจำ 20%
                     <!-- <br> -->
                     <small>ผู้ให้เช่า</small>
                 </div>
-            </div>
-            <div class="mt-6 text-end">
-                <small>วันที่พิมพ์เอกสาร: <?= date('d/m/Y') ?></small>
             </div>
 
             <div class="text-center no-print mt-4">
