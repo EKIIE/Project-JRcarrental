@@ -37,18 +37,3 @@ function connect_db(){
 
 $conn = connect_db(); // เพิ่มบรรทัดนี้ให้เรียกอัตโนมัติ
 ?>
-<!-- ######################################### -->
-<?php
-/*
-$host = "localhost";
-$user = "root";
-$pass = "";
-$dbname = "car_rental";
-$conn = mysqli_connect($host, $user, $pass, $dbname);
-mysqli_set_charset($conn, "utf8");
-
-if (!$conn) {
-  die("Connection failed: " . mysqli_connect_error());
-}
-  */
-?>
