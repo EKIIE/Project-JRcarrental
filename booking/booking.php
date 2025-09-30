@@ -160,8 +160,40 @@ if (!$car) {
 
 
           <div class="mb-3">
-            <label for="pickup_time">เลือกเวลา (เวลาทำการ 6.00-18.00 เท่านั้น)</label>
-            <input type="time" name="pickup_time" id="pickup_time" class="form-control" min="06:00" max="18:00" required>
+            <label for="pickup_time">เลือกเวลา (เวลาทำการ 6.00-19.00)</label>
+            <div class="d-flex gap-2">
+              <!-- เลือกชั่วโมง -->
+              <select id="pickup_hour" class="form-select" style="max-width:120px;" required>
+                <?php for ($h = 6; $h <= 18; $h++): ?>
+                  <option value="<?= sprintf('%02d', $h) ?>"><?= sprintf('%02d', $h) ?></option>
+                <?php endfor; ?>
+              </select>
+
+              <!-- เลือกนาที -->
+              <select id="pickup_minute" class="form-select" style="max-width:120px;" required>
+                <option value="00">00</option>
+                <option value="30">30</option>
+              </select>
+
+              <!-- input hidden ไว้ส่งค่า HH:MM ไป backend -->
+              <input type="hidden" name="pickup_time" id="pickup_time">
+            </div>
+            <script>
+              const hourSel = document.getElementById("pickup_hour");
+              const minSel = document.getElementById("pickup_minute");
+              const hiddenPickup = document.getElementById("pickup_time");
+
+              function updatePickupTime() {
+                hiddenPickup.value = hourSel.value + ":" + minSel.value;
+              }
+
+              hourSel.addEventListener("change", updatePickupTime);
+              minSel.addEventListener("change", updatePickupTime);
+
+              // ตั้งค่าเริ่มต้น
+              updatePickupTime();
+            </script>
+
           </div>
 
 
@@ -205,8 +237,8 @@ if (!$car) {
             </div>
           </div>
 
-
           <button type="submit" class="btn btn-success">ยืนยันการจอง</button>
+
         </form>
       </div>
     </div>
@@ -246,8 +278,22 @@ if (!$car) {
         const diff = Math.ceil((d2 - d1) / msPerDay);
         const days = Math.max(1, diff);
 
-        // ค่าเช่ารวม (แสดงไว้เฉยๆ ยังไม่เก็บตอนนี้)
-        const rentTotal = rate * days;
+        let rentTotal = 0;
+
+        if (days >= 30) {
+          // ✅ คิดแบบรายเดือน
+          const months = Math.floor(days / 30);
+          const leftover = days % 30;
+          const monthlyRate = (rate * 30) * 0.85; // ส่วนลด 15%
+          rentTotal = (months * monthlyRate) + (leftover * rate);
+        } else if (days >= 15 && days < 30) {
+          // ✅ คิดแบบรายวัน + ลด 5%
+          rentTotal = (rate * days) * 0.95;
+        } else {
+          // ✅ คิดแบบรายวันปกติ
+          rentTotal = rate * days;
+        }
+
         const deposit = Math.ceil(rentTotal * 0.2);
 
         // อัปเดต UI
@@ -280,7 +326,40 @@ if (!$car) {
     });
     end.addEventListener("change", calculatePrice);
   </script>
+  <!-- เช็คว่ารถว่างไหม -->
+  <script>
+    function checkAvailability() {
+      if (start.value && end.value) {
+        fetch("check_availability.php", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: `car_id=<?= $car['car_id'] ?>&start_date=${start.value}&end_date=${end.value}`
+          })
+          .then(res => res.json())
+          .then(data => {
+            const btn = document.querySelector("button[type=submit]");
+            if (!data.available) {
+              alert(data.msg);
+              btn.disabled = true; // ❌ ปิดปุ่ม
+              btn.classList.add("btn-secondary");
+              btn.classList.remove("btn-success");
+              btn.textContent = "รถไม่ว่างในวันที่เลือก";
+            } else {
+              btn.disabled = false; // ✅ เปิดปุ่ม
+              btn.classList.add("btn-success");
+              btn.classList.remove("btn-secondary");
+              btn.textContent = "ยืนยันการจอง";
+            }
+          })
+          .catch(err => console.error(err));
+      }
+    }
 
+    start.addEventListener("change", checkAvailability);
+    end.addEventListener("change", checkAvailability);
+  </script>
 
 </body>
 
