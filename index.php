@@ -102,7 +102,7 @@ session_start();
     <h2 class="mb-4">รถที่มีให้เช่า</h2>
     <div class="row">
       <?php
-      $cars = mysqli_query($conn, "SELECT * FROM cars");
+      $cars = mysqli_query($conn, "SELECT * FROM cars WHERE status != 'maintenance'");
       while ($car = mysqli_fetch_assoc($cars)) {
       ?>
         <div class="col-md-4">
