@@ -86,6 +86,7 @@ $result = mysqli_stmt_get_result($stmt);
 <body>
 
   <!-- NAVBAR +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
   <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
     <div class="container">
       <a class="navbar-brand" href="index.php">JR Car Rental</a>
@@ -95,18 +96,29 @@ $result = mysqli_stmt_get_result($stmt);
 
       <div class="collapse navbar-collapse" id="navbarContent">
         <ul class="navbar-nav ms-auto">
+
           <li class="nav-item">
             <a class="nav-link" href="../index.php">หน้าหลัก</a>
           </li>
 
           <?php if (!isset($_SESSION['user_type'])): ?>
-            <li class="nav-item"><a class="nav-link" href="auth/register.php">สมัครสมาชิก</a></li>
-            <li class="nav-item"><a class="nav-link" href="auth/login.php">เข้าสู่ระบบ</a></li>
+            <!-- Guest -->
+            <li class="nav-item">
+              <a class="nav-link" href="auth/register.php">สมัครสมาชิก</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="auth/login.php">เข้าสู่ระบบ</a>
+            </li>
 
           <?php elseif ($_SESSION['user_type'] == 'customer'): ?>
-            <li class="nav-item"><a class="nav-link active" href="booking_history.php">ประวัติการจอง</a></li>
+            <!-- ลูกค้า -->
+            <li class="nav-item">
+              <a class="nav-link" href="booking_history.php">ประวัติการจอง</a>
+            </li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">บัญชีของฉัน</a>
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                บัญชีของฉัน
+              </a>
               <ul class="dropdown-menu">
                 <li><a class="dropdown-item" href="../profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
                 <li><a class="dropdown-item" href="../auth/logout.php">ออกจากระบบ</a></li>
@@ -114,8 +126,11 @@ $result = mysqli_stmt_get_result($stmt);
             </li>
 
           <?php elseif ($_SESSION['user_type'] == 'staff'): ?>
+            <!-- พนักงาน -->
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">เมนูพนักงาน</a>
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                เมนูพนักงาน
+              </a>
               <ul class="dropdown-menu">
                 <li><a class="dropdown-item" href="../staff/checkup.php">ตรวจสอบรถ</a></li>
                 <li><a class="dropdown-item" href="../staff/return_car.php">รับคืนรถ</a></li>
@@ -125,8 +140,11 @@ $result = mysqli_stmt_get_result($stmt);
             </li>
 
           <?php elseif ($_SESSION['user_type'] == 'admin'): ?>
+            <!-- ผู้ดูแลระบบ -->
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">ผู้ดูแลระบบ</a>
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                ผู้ดูแลระบบ
+              </a>
               <ul class="dropdown-menu">
                 <li><a class="dropdown-item" href="../admin/dashboard.php">แดชบอร์ด</a></li>
                 <li><a class="dropdown-item" href="../admin/manage_staff.php">จัดการพนักงาน</a></li>
@@ -142,6 +160,7 @@ $result = mysqli_stmt_get_result($stmt);
       </div>
     </div>
   </nav>
+
   <!-- NAVBAR +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
   <div class="container py-5">
@@ -197,40 +216,47 @@ $result = mysqli_stmt_get_result($stmt);
                   ดูข้อมูลพนักงาน
                 </button>
 
+                <?php if ($status === 'pending'): ?>
+                  <button class="btn btn-outline-danger btn-sm mt-3 cancel-booking"
+                    data-id="<?= $row['booking_id'] ?>">
+                    ยกเลิกการจอง
+                  </button>
+                <?php endif; ?>
+
                 <div class="text-muted small mt-3">จองเมื่อ: <?= date('d/m/Y H:i', strtotime($row['created_at'])) ?></div>
               </div>
             </div>
           </div>
 
-            <!-- Modal ข้อมูลพนักงาน -->
-            <div class="modal fade" id="<?= $modalId ?>" tabindex="-1" aria-hidden="true">
-              <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title">ข้อมูลพนักงานที่ส่งรถ</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                  </div>
-                  <div class="modal-body">
-                    <?php if (!empty($row['emp_deliver'])): ?>
-                      <div class="mb-2"><strong>ชื่อ-นามสกุล:</strong> <?= htmlspecialchars($empFull) ?></div>
-                      <div class="mb-2"><strong>เบอร์โทร:</strong> <?= htmlspecialchars($row['emp_phone'] ?? '-') ?></div>
-                      <div class="mb-2"><strong>อีเมล:</strong> <?= htmlspecialchars($row['emp_email'] ?? '-') ?></div>
-                      <hr>
-                      <div class="small text-muted">
-                        หากต้องการเปลี่ยนเวลานัดรับ-ส่งรถ กรุณาติดต่อพนักงานโดยตรง หรือฝ่ายบริการลูกค้า
-                      </div>
-                    <?php else: ?>
-                      <div class="alert alert-warning text-center">
-                        ยังไม่มีพนักงานยืนยันการจอง
-                      </div>
-                    <?php endif; ?>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">ปิด</button>
-                  </div>
+          <!-- Modal ข้อมูลพนักงาน -->
+          <div class="modal fade" id="<?= $modalId ?>" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">ข้อมูลพนักงานที่ส่งรถ</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <?php if (!empty($row['emp_deliver'])): ?>
+                    <div class="mb-2"><strong>ชื่อ-นามสกุล:</strong> <?= htmlspecialchars($empFull) ?></div>
+                    <div class="mb-2"><strong>เบอร์โทร:</strong> <?= htmlspecialchars($row['emp_phone'] ?? '-') ?></div>
+                    <div class="mb-2"><strong>อีเมล:</strong> <?= htmlspecialchars($row['emp_email'] ?? '-') ?></div>
+                    <hr>
+                    <div class="small text-muted">
+                      หากต้องการเปลี่ยนเวลานัดรับ-ส่งรถ กรุณาติดต่อพนักงานโดยตรง หรือฝ่ายบริการลูกค้า
+                    </div>
+                  <?php else: ?>
+                    <div class="alert alert-warning text-center">
+                      ยังไม่มีพนักงานยืนยันการจอง
+                    </div>
+                  <?php endif; ?>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-light" data-bs-dismiss="modal">ปิด</button>
                 </div>
               </div>
             </div>
+          </div>
         <?php endwhile; ?>
       </div>
     <?php endif; ?>
@@ -240,10 +266,10 @@ $result = mysqli_stmt_get_result($stmt);
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-  <?php if (!empty($_GET['new'])): ?>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      <?php if (!empty($_GET['new'])): ?>
         Swal.fire({
           toast: true,
           position: 'top-end',
@@ -252,9 +278,45 @@ $result = mysqli_stmt_get_result($stmt);
           showConfirmButton: false,
           timer: 2000
         });
+      <?php endif; ?>
+      // });
+      // document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".cancel-booking").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-id");
+          Swal.fire({
+            title: "ต้องการยกเลิกการจอง?",
+            text: "หากยกเลิกแล้วจะไม่สามารถคืนค่ามัดจำได้",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "ใช่, ยกเลิกเลย",
+            cancelButtonText: "ไม่"
+          }).then(result => {
+            if (result.isConfirmed) {
+              fetch("cancel_booking.php", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                  },
+                  body: "booking_id=" + id
+                })
+                .then(res => res.json())
+                .then(data => {
+                  if (data.success) {
+                    Swal.fire("สำเร็จ", data.msg, "success").then(() => {
+                      location.reload();
+                    });
+                  } else {
+                    Swal.fire("ผิดพลาด", data.msg, "error");
+                  }
+                })
+                .catch(err => console.error(err));
+            }
+          });
+        });
       });
-    </script>
-  <?php endif; ?>
+    });
+  </script>
 
 </body>
 

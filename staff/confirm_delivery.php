@@ -3,9 +3,10 @@ session_start();
 require("../db.php");
 date_default_timezone_set('Asia/Bangkok');
 
-if (empty($_SESSION['user_type']) || !in_array($_SESSION['user_type'], ['staff', 'admin'])) {
-  echo "<script>alert('Access Denied'); window.location='../home/index.php';</script>";
-  exit;
+// อนุญาตทั้ง staff และ admin
+if (!isset($_SESSION['user_type']) || !in_array($_SESSION['user_type'], ['staff', 'admin'])) {
+    echo "Access Denied";
+    exit();
 }
 
 $booking_id = (int)($_POST['booking_id'] ?? 0);

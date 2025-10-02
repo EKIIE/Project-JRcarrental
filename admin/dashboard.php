@@ -444,7 +444,7 @@ foreach ($allMonths as $m) {
                             <li><a class="dropdown-item" href="dashboard.php">แดชบอร์ด</a></li>
                             <li><a class="dropdown-item" href="manage_staff.php">จัดการพนักงาน</a></li>
                             <li><a class="dropdown-item" href="manage_cars.php">จัดการรถ</a></li>
-                            <li><a class="dropdown-item" href="manage_bookings.php">จัดการการจอง</a></li>
+                            <li><a class="dropdown-item" href="../staff/staff_dashboard.php">จัดการการจอง</a></li>
                             <li><a class="dropdown-item" href="../profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
                             <li><a class="dropdown-item" href="../auth/logout.php">ออกจากระบบ</a></li>
                         </ul>
@@ -529,7 +529,7 @@ foreach ($allMonths as $m) {
             <div class="col-12 col-lg-6">
                 <h3 class="fw-bold mb-3">Manage </h3>
                 <div class="list-group">
-                    <a href="manage_booking.php" class="list-group-item list-group-item-action py-3 rounded-3 mb-2 shadow-sm">
+                    <a href="../staff/staff_dashboard.php" class="list-group-item list-group-item-action py-3 rounded-3 mb-2 shadow-sm">
                         <h5 class="mb-1 fw-bold">จัดการรายการจอง</h5>
                         <p class="mb-1">ดูรายการจองทั้งหมด, อนุมัติ, หรือปฏิเสธคำขอจอง</p>
                     </a>

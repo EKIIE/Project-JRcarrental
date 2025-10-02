@@ -201,9 +201,9 @@ if (!$car) {
             <label for="location" class="form-label">สถานที่รับ-คืนรถ</label>
             <select class="form-select" name="location" id="location" required>
               <option value="">-- กรุณาเลือก --</option>
-              <option value="หน้าร้าน">หน้าร้าน</option>
-              <option value="สนามบิน">สนามบิน</option>
-              <option value="ปั๊มปตทข้างสนามบิน">ปั๊มปตทข้างสนามบิน</option>
+              <option value="v1">หน้าร้าน</option>
+              <option value="v2">สนามบินเชียงใหม่</option>
+              <option value="v3">ปั๊มปตทข้างสนามบิน</option>
             </select>
           </div>
 
@@ -281,16 +281,16 @@ if (!$car) {
         let rentTotal = 0;
 
         if (days >= 30) {
-          // ✅ คิดแบบรายเดือน
+          // คิดแบบรายเดือน
           const months = Math.floor(days / 30);
           const leftover = days % 30;
           const monthlyRate = (rate * 30) * 0.85; // ส่วนลด 15%
           rentTotal = (months * monthlyRate) + (leftover * rate);
         } else if (days >= 15 && days < 30) {
-          // ✅ คิดแบบรายวัน + ลด 5%
+          // คิดแบบรายวัน + ลด 5%
           rentTotal = (rate * days) * 0.95;
         } else {
-          // ✅ คิดแบบรายวันปกติ
+          // คิดแบบรายวันปกติ
           rentTotal = rate * days;
         }
 

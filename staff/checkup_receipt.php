@@ -37,7 +37,7 @@ $days = (new DateTime($rec['start_date']))->diff(new DateTime($rec['end_date']))
 if ($days <= 0) $days = 1; // กันกรณีวันเท่ากัน
 $base_rent   = (float)$rec['daily_rate'] * $days;
 $penalty     = (float)$rec['penalty_fee'];
-$deposit     = (float)$rec['deposit'];
+$deposit     = $base_rent * 0.20;
 $amount_due  = $base_rent + $penalty - $deposit;
 if ($amount_due < 0) $amount_due = 0.00;
 

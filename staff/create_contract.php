@@ -3,12 +3,13 @@ session_start();
 require("../db.php");
 date_default_timezone_set('Asia/Bangkok');
 
-if (empty($_SESSION['user_type']) || !in_array($_SESSION['user_type'], ['staff', 'admin'])) {
-    echo "<script>alert('Access Denied'); window.location='../home/index.php';</script>";
-    exit;
+// อนุญาตทั้ง staff และ admin
+if (!isset($_SESSION['user_type']) || !in_array($_SESSION['user_type'], ['staff', 'admin'])) {
+    echo "Access Denied";
+    exit();
 }
 
-$booking_id = (int)($_GET['booking_id'] ?? 0);
+$booking_id = (int)($_POST['booking_id'] ?? 0);
 if ($booking_id <= 0) {
     die("Invalid booking_id");
 }
@@ -22,15 +23,21 @@ if (!$booking) {
 
 $user_id     = (int)$booking['user_id'];
 $car_id      = (int)$booking['car_id'];
+
 $pickup_date = $booking['start_date'];
 $return_date = $booking['end_date'];
 $total_price = (float)$booking['total_price'];
 
 // ดึงราคาต่อวัน
 $car  = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM cars WHERE car_id={$car_id}")) ?: [];
-$rate = isset($booking['rate']) ? (float)$booking['rate'] : (float)($car['daily_rate'] ?? 0);
-$days = max(1, (int)ceil((strtotime($return_date) - strtotime($pickup_date)) / (60 * 60 * 24)));
-$rent_total = $rate * $days;
+// $rate = isset($booking['rate']) ? (float)$booking['rate'] : (float)($car['daily_rate'] ?? 0);
+$rate = isset($booking['rate']) ? (float)$booking['rate'] : 0;
+if ($rate <= 0 && !empty($car['daily_rate'])) {
+    $rate = (float)$car['daily_rate'];
+}
+$days = max(1, (int)ceil((strtotime($return_date) - strtotime($pickup_date)) / 86400));
+// $rent_total = ($rate > 0 ? $rate : 0) * $days;
+$rent_total = round($rate * $days, 2);
 
 // transaction
 mysqli_begin_transaction($conn);
@@ -41,12 +48,12 @@ try {
 
     if (!$exists) {
         $sql = "INSERT INTO rentals
-            (booking_id, user_id, car_id, emp_deliver, actual_pickup_date, rental_status, total_amount, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, 'active', ?, NOW(), NOW())";
+            (booking_id, user_id, car_id, emp_deliver, actual_pickup_date, rental_status, contract_file, total_amount, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, 'active', NULL, ?, NOW(), NOW())";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param(
             $stmt,
-            'iiiisd',
+            'iiiisd',   // booking_id=i, user_id=i, car_id=i, emp_deliver=i, pickup_date=s, rent_total=d
             $booking_id,
             $user_id,
             $car_id,

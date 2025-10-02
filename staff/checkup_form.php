@@ -2,10 +2,10 @@
 require("../db.php");
 session_start();
 
-// ต้องเป็น staff เท่านั้น
-if (empty($_SESSION['user_type']) || !in_array($_SESSION['user_type'], ['staff', 'admin'])) {
-    echo "<script>alert('Access Denied'); window.location='../home/index.php';</script>";
-    exit;
+// อนุญาตทั้ง staff และ admin
+if (!isset($_SESSION['user_type']) || !in_array($_SESSION['user_type'], ['staff', 'admin'])) {
+  echo "Access Denied";
+  exit();
 }
 if (!isset($_SESSION['employee_id'])) {
   echo "<script>alert('ไม่พบ employee_id ใน session (ตั้งค่าตอน login)'); history.back();</script>";
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $key_lost       = isset($_POST['key_lost']) ? 1 : 0;
   $smell_detected = isset($_POST['smell_detected']) ? 1 : 0;
   $late_return    = isset($_POST['late_return']) ? 1 : 0;
-  $damage_notes   = mysqli_real_escape_string($conn, $_POST['damage_notes'] ?? '');
+  $damage_notes   = $_POST['damage_notes'] ?? '';
 
   // คำนวณค่าปรับรวม
   $penalty = 0.00;
@@ -66,34 +66,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if ($late_return)    $penalty += ($daily_rate * $LATE_ADD_DAYS);
 
   // บันทึกลง checkups (final)
-  $sql = sprintf(
-    "INSERT INTO checkups
-        (rental_id, employee_id, checkup_type, checkup_date,
-         fuel_notfull, tire_damaged, key_lost, smell_detected, late_return,
-         damage_notes, penalty_fee, paid_cash, payment_verified)
-         VALUES
-        (%d, %d, 'final', NOW(),
-         %d, %d, %d, %d, %d,
-         '%s', %.2f, 0, 0)",
-    (int)$rental['rental_id'],
-    $emp_id,
-    $fuel_notfull,
-    $tire_damaged,
-    $key_lost,
-    $smell_detected,
-    $late_return,
-    $damage_notes,
-    $penalty
-  );
-  if (!mysqli_query($conn, $sql)) {
-    echo "บันทึกไม่สำเร็จ: " . mysqli_error($conn);
+  mysqli_begin_transaction($conn);
+  try {
+    // INSERT checkups
+    $sql = "INSERT INTO checkups
+          (rental_id, employee_id, checkup_type, checkup_date,
+           fuel_notfull, tire_damaged, key_lost, smell_detected, late_return,
+           damage_notes, penalty_fee, paid_cash, payment_verified)
+          VALUES (?, ?, 'final', NOW(),
+           ?, ?, ?, ?, ?, ?, ?, 0, 0)";
+    $stmt = mysqli_prepare($conn, $sql);
+
+    mysqli_stmt_bind_param(
+      $stmt,
+      "iiiiiiisd",
+      $rental['rental_id'],
+      $emp_id,
+      $fuel_notfull,
+      $tire_damaged,
+      $key_lost,
+      $smell_detected,
+      $late_return,
+      $damage_notes,
+      $penalty
+    );
+
+    if (!mysqli_stmt_execute($stmt)) {
+      throw new Exception("Insert checkup fail: " . mysqli_stmt_error($stmt));
+    }
+    $checkup_id = mysqli_insert_id($conn);
+
+    // คำนวณจำนวนวันเช่า
+    $start_date = new DateTime($rental['start_date']);
+    $end_date   = new DateTime($rental['end_date']);
+    $days = $start_date->diff($end_date)->days;
+    if ($days <= 0) $days = 1;
+
+    // คำนวณค่าเช่า
+    $base_rent = $daily_rate * $days;
+    // ส่วนลด
+    $discount = 0;
+    if ($days >= 30) {
+      $discount = 0.15; // 15%
+    } elseif ($days >= 15) {
+      $discount = 0.05; // 5%
+    }
+    // คำนวณยอดสุทธิหลังหักส่วนลด
+    $total_amount = $base_rent - ($base_rent * $discount);
+
+    // UPDATE rentals
+    $sql2 = "UPDATE rentals 
+         SET emp_returner=?, actual_return_date=NOW(), 
+             rental_status='completed', total_amount=?, updated_at=NOW() 
+         WHERE rental_id=?";
+    $stmt2 = mysqli_prepare($conn, $sql2);
+    mysqli_stmt_bind_param($stmt2, "idi", $emp_id, $total_amount, $rental['rental_id']);
+
+    if (!mysqli_stmt_execute($stmt2)) {
+      throw new Exception("Update rentals fail: " . mysqli_stmt_error($stmt2));
+    }
+
+    // UPDATE cars
+    $sql3 = "UPDATE cars SET status='available' WHERE car_id=?";
+    $stmt3 = mysqli_prepare($conn, $sql3);
+    mysqli_stmt_bind_param($stmt3, "i", $car_id);
+    if (!mysqli_stmt_execute($stmt3)) {
+      throw new Exception("Update cars fail: " . mysqli_stmt_error($stmt3));
+    }
+    mysqli_commit($conn);
+
+    header("Location: checkup_receipt.php?checkup_id=" . $checkup_id);
+    exit;
+  } catch (Exception $e) {
+    mysqli_rollback($conn);
+    echo "❌ เกิดข้อผิดพลาด: " . $e->getMessage();
     exit;
   }
-  $checkup_id = mysqli_insert_id($conn);
-
-  // ยังไม่ปิดงาน/เปลี่ยนสถานะรถทันที ให้ไปหน้าใบเสร็จ+ชำระยอดก่อน
-  header("Location: checkup_receipt.php?checkup_id=" . $checkup_id);
-  exit;
 }
 ?>
 <!DOCTYPE html>
