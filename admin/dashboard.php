@@ -193,11 +193,32 @@ while ($r = mysqli_fetch_assoc($car_type_query)) {
 
 // 2. ค่าใช้จ่ายรายเดือน (รวม maintenance + installment + insurance)
 $expense_month_query = mysqli_query($conn, "
-    SELECT DATE_FORMAT(m.maintenance_date, '%Y-%m') AS month,
-           SUM(m.cost) AS maint,
-           (SELECT SUM(i.monthly) FROM installments i WHERE DATE_FORMAT(i.inst_date, '%Y-%m') = DATE_FORMAT(m.maintenance_date, '%Y-%m')) AS inst,
-           (SELECT SUM(s.monthly) FROM insurances s WHERE DATE_FORMAT(s.insu_date, '%Y-%m') = DATE_FORMAT(m.maintenance_date, '%Y-%m')) AS insu
-    FROM maintenance m
+    SELECT month,
+           COALESCE(SUM(maint), 0) AS maint,
+           COALESCE(SUM(inst), 0) AS inst,
+           COALESCE(SUM(insu), 0) AS insu
+    FROM (
+        SELECT DATE_FORMAT(maintenance_date, '%Y-%m') AS month,
+               SUM(cost) AS maint,
+               0 AS inst,
+               0 AS insu
+        FROM maintenance
+        GROUP BY DATE_FORMAT(maintenance_date, '%Y-%m')
+        UNION ALL
+        SELECT DATE_FORMAT(inst_date, '%Y-%m') AS month,
+               0 AS maint,
+               SUM(monthly) AS inst,
+               0 AS insu
+        FROM installments
+        GROUP BY DATE_FORMAT(inst_date, '%Y-%m')
+        UNION ALL
+        SELECT DATE_FORMAT(insu_date, '%Y-%m') AS month,
+               0 AS maint,
+               0 AS inst,
+               SUM(monthly) AS insu
+        FROM insurances
+        GROUP BY DATE_FORMAT(insu_date, '%Y-%m')
+    ) AS all_expenses
     GROUP BY month
     ORDER BY month
 ");
