@@ -34,7 +34,9 @@ while ($row = mysqli_fetch_assoc($car_statuses)) {
 // ซ่อมบำรุงแยกตามเดือน
 $maintenance_query = mysqli_query($conn, "
     SELECT DATE_FORMAT(maintenance_date, '%M %Y') AS month, SUM(cost) AS total
-    FROM maintenance GROUP BY month ORDER BY maintenance_date
+    FROM maintenance 
+    GROUP BY month 
+    ORDER BY month
 ");
 $chart_data_maintenance = [];
 while ($row = mysqli_fetch_assoc($maintenance_query)) {
@@ -43,66 +45,115 @@ while ($row = mysqli_fetch_assoc($maintenance_query)) {
 
 // ค่างวด
 $installments_query = mysqli_query($conn, "
-    SELECT company, SUM(monthly) AS total
-    FROM installments GROUP BY company
+    SELECT DATE_FORMAT(inst_date, '%Y-%m') AS month, SUM(monthly) AS total
+    FROM installments 
+    GROUP BY month 
+    ORDER BY month
 ");
 $chart_data_installment = [];
 while ($row = mysqli_fetch_assoc($installments_query)) {
-    $chart_data_installment[] = [$row['company'], (float)$row['total']];
+    $chart_data_installment[] = [$row['month'], (float)$row['total']];
 }
 
 // ประกัน
 $insurance_query = mysqli_query($conn, "
-    SELECT company, COUNT(*) AS count
-    FROM insurances GROUP BY company
+    SELECT DATE_FORMAT(insu_date, '%Y-%m') AS month, SUM(monthly) AS total
+    FROM insurances 
+    GROUP BY month 
+    ORDER BY month
 ");
 $chart_data_insurance = [];
 while ($row = mysqli_fetch_assoc($insurance_query)) {
-    $chart_data_insurance[] = [$row['company'], (int)$row['count']];
+    $chart_data_insurance[] = [$row['month'], (int)$row['total']];
 }
 //----------------------------------------------------------------
+$start = isset($_GET['start']) && $_GET['start'] !== '' ? $_GET['start'] : null;
+$end   = isset($_GET['end']) && $_GET['end'] !== '' ? $_GET['end'] : null;
+
 // รายรับ: รวมยอดรายได้จากการเช่า
-$income_query = mysqli_query($conn, "
+$income_sql = "
     SELECT DATE_FORMAT(actual_pickup_date, '%Y-%m') AS month, SUM(total_amount) AS total
     FROM rentals
     WHERE rental_status IN ('active','completed')
-    GROUP BY month
-    ORDER BY month
-");
+";
+
+// เพิ่มเงื่อนไขช่วงวันที่
+if ($start && $end) {
+    $income_sql .= " AND DATE(actual_pickup_date) BETWEEN '$start' AND '$end'";
+} elseif ($start) {
+    $income_sql .= " AND DATE(actual_pickup_date) >= '$start'";
+} elseif ($end) {
+    $income_sql .= " AND DATE(actual_pickup_date) <= '$end'";
+}
+
+$income_sql .= " GROUP BY month ORDER BY month";
+
+$income_query = mysqli_query($conn, $income_sql);
 $income_data = [];
 while ($row = mysqli_fetch_assoc($income_query)) {
     $income_data[$row['month']] = (float)$row['total'];
 }
 
 // รายจ่าย: รวมจาก maintenance + installments + insurance
-// $expense_data = [];
-// 1. Maintenance
+$expense_data = [];
 $expense_maint = [];
-$q_m = mysqli_query($conn, "
+$expense_inst = [];
+$expense_insu = [];
+
+// 1. Maintenance
+$q_m_sql = "
     SELECT DATE_FORMAT(maintenance_date, '%Y-%m') AS month, SUM(cost) AS total
-    FROM maintenance GROUP BY month
-");
+    FROM maintenance WHERE 1
+";
+if ($start && $end) {
+    $q_m_sql .= " AND DATE(maintenance_date) BETWEEN '$start' AND '$end'";
+} elseif ($start) {
+    $q_m_sql .= " AND DATE(maintenance_date) >= '$start'";
+} elseif ($end) {
+    $q_m_sql .= " AND DATE(maintenance_date) <= '$end'";
+}
+$q_m_sql .= " GROUP BY month ORDER BY month";
+$q_m = mysqli_query($conn, $q_m_sql);
 while ($row = mysqli_fetch_assoc($q_m)) {
+    $expense_maint[$row['month']] = (float)$row['total'];
     $expense_data[$row['month']] = ($expense_data[$row['month']] ?? 0) + (float)$row['total'];
 }
 
 // 2. Installments
-$expense_inst = [];
-$q_i = mysqli_query($conn, "
+$q_i_sql = "
     SELECT DATE_FORMAT(inst_date, '%Y-%m') AS month, SUM(monthly) AS total
-    FROM installments GROUP BY month
-");
+    FROM installments WHERE 1
+";
+if ($start && $end) {
+    $q_i_sql .= " AND DATE(inst_date) BETWEEN '$start' AND '$end'";
+} elseif ($start) {
+    $q_i_sql .= " AND DATE(inst_date) >= '$start'";
+} elseif ($end) {
+    $q_i_sql .= " AND DATE(inst_date) <= '$end'";
+}
+$q_i_sql .= " GROUP BY month ORDER BY month";
+$q_i = mysqli_query($conn, $q_i_sql);
 while ($row = mysqli_fetch_assoc($q_i)) {
+    $expense_inst[$row['month']] = (float)$row['total'];
     $expense_data[$row['month']] = ($expense_data[$row['month']] ?? 0) + (float)$row['total'];
 }
 
 // 3. Insurances
-$expense_insu = [];
-$q_s = mysqli_query($conn, "
+$q_s_sql = "
     SELECT DATE_FORMAT(insu_date, '%Y-%m') AS month, SUM(monthly) AS total
-    FROM insurances GROUP BY month
-");
+    FROM insurances WHERE 1
+";
+if ($start && $end) {
+    $q_s_sql .= " AND DATE(insu_date) BETWEEN '$start' AND '$end'";
+} elseif ($start) {
+    $q_s_sql .= " AND DATE(insu_date) >= '$start'";
+} elseif ($end) {
+    $q_s_sql .= " AND DATE(insu_date) <= '$end'";
+}
+$q_s_sql .= " GROUP BY month ORDER BY month";
+$q_s = mysqli_query($conn, $q_s_sql);
 while ($row = mysqli_fetch_assoc($q_s)) {
+    $expense_insu[$row['month']] = (float)$row['total'];
     $expense_data[$row['month']] = ($expense_data[$row['month']] ?? 0) + (float)$row['total'];
 }
 
@@ -125,6 +176,65 @@ foreach ($allMonths as $m) {
         $expense_inst[$m] ?? 0,
         $expense_insu[$m] ?? 0
     ];
+}
+
+// 1. รถทั้งหมดแยกตามประเภท
+$car_type_query = mysqli_query($conn, "
+    SELECT t.type_name AS car_type, COUNT(c.car_id) AS total
+    FROM cars c
+    JOIN car_types t ON c.type_id = t.type_id
+    GROUP BY t.type_name
+    ORDER BY total DESC
+");
+$chart_car_type = [];
+while ($r = mysqli_fetch_assoc($car_type_query)) {
+    $chart_car_type[] = [$r['car_type'], (int)$r['total']];
+}
+
+// 2. ค่าใช้จ่ายรายเดือน (รวม maintenance + installment + insurance)
+$expense_month_query = mysqli_query($conn, "
+    SELECT DATE_FORMAT(m.maintenance_date, '%Y-%m') AS month,
+           SUM(m.cost) AS maint,
+           (SELECT SUM(i.monthly) FROM installments i WHERE DATE_FORMAT(i.inst_date, '%Y-%m') = DATE_FORMAT(m.maintenance_date, '%Y-%m')) AS inst,
+           (SELECT SUM(s.monthly) FROM insurances s WHERE DATE_FORMAT(s.insu_date, '%Y-%m') = DATE_FORMAT(m.maintenance_date, '%Y-%m')) AS insu
+    FROM maintenance m
+    GROUP BY month
+    ORDER BY month
+");
+$chart_expense_month = [];
+while ($r = mysqli_fetch_assoc($expense_month_query)) {
+    $chart_expense_month[] = [
+        $r['month'],
+        (float)$r['maint'],
+        (float)($r['inst'] ?? 0),
+        (float)($r['insu'] ?? 0)
+    ];
+}
+
+// 3. ยอดการเช่าเทียบรายเดือน
+$rental_month_query = mysqli_query($conn, "
+    SELECT DATE_FORMAT(actual_pickup_date, '%Y-%m') AS month, COUNT(*) AS total
+    FROM rentals
+    WHERE rental_status IN ('active','completed')
+    GROUP BY month
+    ORDER BY month
+");
+$chart_rental_month = [];
+while ($r = mysqli_fetch_assoc($rental_month_query)) {
+    $chart_rental_month[] = [$r['month'], (int)$r['total']];
+}
+
+// 4. ยอดการเช่ารายคัน
+$rental_per_car = mysqli_query($conn, "
+    SELECT c.license_plate, COUNT(r.rental_id) AS total
+    FROM rentals r
+    JOIN cars c ON r.car_id = c.car_id
+    GROUP BY c.license_plate
+    ORDER BY total DESC
+");
+$chart_rental_per_car = [];
+while ($r = mysqli_fetch_assoc($rental_per_car)) {
+    $chart_rental_per_car[] = [$r['license_plate'], (int)$r['total']];
 }
 
 ?>
@@ -295,48 +405,6 @@ foreach ($allMonths as $m) {
 
             data.addRows(chartDataFromPHP);
 
-            var options = {
-                title: 'สถานะรถในระบบ',
-                width: 400,
-                height: 300
-            };
-
-            // 1. Car Status Chart
-            var data1 = google.visualization.arrayToDataTable([
-                ['สถานะรถ', 'จำนวน'], ...chart_data_status
-            ]);
-            var chart1 = new google.visualization.PieChart(document.getElementById('car_status_chart'));
-            chart1.draw(data1, {
-                title: 'สถานะรถในระบบ'
-            });
-
-            // 2. Maintenance Cost Chart
-            var data2 = google.visualization.arrayToDataTable([
-                ['เดือน', 'ค่าใช้จ่าย'], ...chart_data_maintenance
-            ]);
-            var chart2 = new google.visualization.ColumnChart(document.getElementById('maintenance_chart'));
-            chart2.draw(data2, {
-                title: 'ค่าใช้จ่ายซ่อมบำรุงรายเดือน'
-            });
-
-            // 3. Installment Chart
-            var data3 = google.visualization.arrayToDataTable([
-                ['บริษัท', 'ยอดรวมค่างวด'], ...chart_data_installment
-            ]);
-            var chart3 = new google.visualization.BarChart(document.getElementById('installment_chart'));
-            chart3.draw(data3, {
-                title: 'ยอดค่างวดต่อบริษัท'
-            });
-
-            // 4. Insurance Chart
-            var data4 = google.visualization.arrayToDataTable([
-                ['บริษัท', 'จำนวนกรมธรรม์'], ...chart_data_insurance
-            ]);
-            var chart4 = new google.visualization.ColumnChart(document.getElementById('insurance_chart'));
-            chart4.draw(data4, {
-                title: 'จำนวนรถที่มีประกันแยกตามบริษัท'
-            });
-
             // รายรับ-รายจ่าย รายเดือน
             var data5 = google.visualization.arrayToDataTable([
                 ['เดือน', 'รายรับ', 'Maintenance', 'Installments', 'Insurance'],
@@ -346,10 +414,61 @@ foreach ($allMonths as $m) {
             var chart5 = new google.visualization.ColumnChart(document.getElementById('income_expense_chart'));
             chart5.draw(data5, {
                 title: 'รายรับ-รายจ่าย รายเดือน',
-                hAxis: { title: 'เดือน' },
-                vAxis: { title: 'จำนวนเงิน (บาท)' },
+                hAxis: {
+                    title: 'เดือน'
+                },
+                vAxis: {
+                    title: 'จำนวนเงิน (บาท)'
+                },
                 colors: ['#28a745', '#ffc107', '#17a2b8', '#dc3545'], // เขียว=รายรับ, แดง=รายจ่าย
                 isStacked: false
+            });
+
+            // --- รถทั้งหมดแยกตามประเภท ---
+            var data6 = google.visualization.arrayToDataTable([
+                ['ประเภท', 'จำนวน'], ...<?= json_encode($chart_car_type) ?>
+            ]);
+            var chart6 = new google.visualization.PieChart(document.getElementById('car_type_chart'));
+            chart6.draw(data6, {
+                title: 'รถทั้งหมดแยกตามประเภท',
+                pieHole: 0.4
+            });
+
+            // --- ค่าใช้จ่ายรายเดือน (3 แท่ง) ---
+            var data7 = google.visualization.arrayToDataTable([
+                ['เดือน', 'Maintenance', 'Installment', 'Insurance'],
+                ...<?= json_encode($chart_expense_month) ?>
+            ]);
+            var chart7 = new google.visualization.ColumnChart(document.getElementById('expense_month_chart'));
+            chart7.draw(data7, {
+                title: 'ค่าใช้จ่ายรายเดือนแยกตามประเภท',
+                colors: ['#ffc107', '#17a2b8', '#dc3545']
+            });
+
+            // --- ยอดการเช่าเทียบรายเดือน ---
+            var data8 = google.visualization.arrayToDataTable([
+                ['เดือน', 'จำนวนการเช่า'],
+                ...<?= json_encode($chart_rental_month) ?>
+            ]);
+            var chart8 = new google.visualization.LineChart(document.getElementById('rental_month_chart'));
+            chart8.draw(data8, {
+                title: 'ยอดการเช่าเทียบรายเดือน',
+                curveType: 'function',
+                legend: {
+                    position: 'bottom'
+                },
+                colors: ['#28a745']
+            });
+
+            // --- ยอดการเช่ารายคัน ---
+            var data9 = google.visualization.arrayToDataTable([
+                ['ป้ายทะเบียน', 'จำนวนการเช่า'],
+                ...<?= json_encode($chart_rental_per_car) ?>
+            ]);
+            var chart9 = new google.visualization.BarChart(document.getElementById('rental_per_car_chart'));
+            chart9.draw(data9, {
+                title: 'ยอดการเช่ารายคัน',
+                colors: ['#007bff']
             });
 
         }
@@ -478,6 +597,23 @@ foreach ($allMonths as $m) {
                 <!-- รายรับ/รายจ่าย -->
                 <div class="tab-pane fade show active" id="tab1" role="tabpanel">
                     <h5 class="fw-bold mb-3">📈 รายรับ-รายจ่าย รายเดือน</h5>
+                    <!-- ตัวกรองวันที่ -->
+                    <form method="get" class="d-flex align-items-end gap-3 mb-3">
+                        <div>
+                            <label for="start" class="form-label mb-1">เริ่มวันที่</label>
+                            <input type="date" id="start" name="start" class="form-control"
+                                value="<?= htmlspecialchars($_GET['start'] ?? '') ?>">
+                        </div>
+                        <div>
+                            <label for="end" class="form-label mb-1">ถึงวันที่</label>
+                            <input type="date" id="end" name="end" class="form-control"
+                                value="<?= htmlspecialchars($_GET['end'] ?? '') ?>">
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-primary">แสดง</button>
+                            <a href="dashboard.php" class="btn btn-secondary">รีเซ็ต</a>
+                        </div>
+                    </form>
                     <div id="income_expense_chart" style="width:100%; height:500px;"></div>
                 </div>
 
@@ -494,29 +630,30 @@ foreach ($allMonths as $m) {
                 <!-- รายงานอื่นๆ -->
                 <div class="tab-pane fade" id="tab3" role="tabpanel">
                     <div class="row">
-                        <!-- สถานะรถ -->
-                        <div class="col-md-6">
-                            <h5 class="fw-bold mb-3">📊 สถานะรถในระบบ</h5>
-                            <div id="car_status_chart"></div>
-                        </div>
-
-                        <!-- ค่าใช้จ่ายซ่อมบำรุง -->
-                        <div class="col-md-6">
-                            <h5 class="fw-bold mb-3">🛠 ค่าใช้จ่ายซ่อมบำรุงรายเดือน</h5>
-                            <div id="maintenance_chart"></div>
-                        </div>
-
-                        <!-- ค่างวด -->
+                        <!-- รถทั้งหมดแยกตามประเภท -->
                         <div class="col-md-6 mt-5">
-                            <h5 class="fw-bold mb-3">📄 ค่างวดรถ (Installments)</h5>
-                            <div id="installment_chart"></div>
+                            <h5 class="fw-bold mb-3">🚘 รถทั้งหมดแยกตามประเภท</h5>
+                            <div id="car_type_chart" style="height: 400px;"></div>
                         </div>
 
-                        <!-- ประกันรถ -->
+                        <!-- ค่าใช้จ่ายรายเดือน -->
                         <div class="col-md-6 mt-5">
-                            <h5 class="fw-bold mb-3">🛡 บริษัทประกันที่ใช้งาน</h5>
-                            <div id="insurance_chart"></div>
+                            <h5 class="fw-bold mb-3">💸 ค่าใช้จ่ายรายเดือนแยกตามประเภท</h5>
+                            <div id="expense_month_chart" style="height: 400px;"></div>
                         </div>
+
+                        <!-- ยอดการเช่าเทียบรายเดือน -->
+                        <div class="col-md-6 mt-5">
+                            <h5 class="fw-bold mb-3">📅 ยอดการเช่าเทียบรายเดือน</h5>
+                            <div id="rental_month_chart" style="height: 400px;"></div>
+                        </div>
+
+                        <!-- ยอดการเช่ารายคัน -->
+                        <div class="col-md-6 mt-5">
+                            <h5 class="fw-bold mb-3">🏷️ ยอดการเช่ารายคัน</h5>
+                            <div id="rental_per_car_chart" style="height: 400px;"></div>
+                        </div>
+
                     </div>
                 </div>
 

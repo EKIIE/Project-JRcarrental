@@ -13,13 +13,14 @@ if (empty($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
 $events = [];
 
 // เอามาจาก rentals + bookings
-$q = mysqli_query($conn, "SELECT r.rental_id, b.start_date, b.end_date 
+$q = mysqli_query($conn, "SELECT r.rental_id, b.start_date, b.end_date, c.license_plate 
                           FROM rentals r 
+                            JOIN cars c ON r.car_id = c.car_id
                           JOIN bookings b ON r.booking_id = b.booking_id");
 while ($r = mysqli_fetch_assoc($q)) {
     $events[] = [
         'id' => 'rent_' . $r['rental_id'],
-        'title' => 'เช่า #' . $r['rental_id'],
+        'title' => 'ทะเบียน ' . $r['license_plate'],
         'start' => $r['start_date'],
         'end'   => $r['end_date'],
         'color' => '#3498db' // น้ำเงิน
