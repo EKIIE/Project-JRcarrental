@@ -18,9 +18,9 @@ function connect_db(){
     }else{
             //server
         $servername = "localhost"; 
-        $username = "cistrain_ekiie";
-        $password = "m053213700";
-        $dbname = "cistrain_ekiie";
+        $username = "root";
+        $password = "rooT2244_";
+        $dbname = "jr_carrental";
         // echo "<p style='color: red;'>Using: $username@$servername</p>";
     }
     $conn = mysqli_connect($servername, $username, $password, $dbname);
