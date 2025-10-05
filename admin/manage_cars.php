@@ -42,6 +42,19 @@ function safe_image_upload($file, $prefix, $upload_dir, $max_mb = 8)
     return [true, $name];
 }
 
+// ดึงรายการประเภทรถ
+$types = [];
+$resTypes = mysqli_query($conn, "SELECT * FROM car_types ORDER BY type_name ASC");
+while ($resTypes && $r = mysqli_fetch_assoc($resTypes)) {
+    $types[] = $r;
+}
+// ดึงรายการเชื้อเพลิง
+$gases = [];
+$resGas = mysqli_query($conn, "SELECT * FROM car_gas ORDER BY gas_name ASC");
+while ($resGas && $r = mysqli_fetch_assoc($resGas)) {
+    $gases[] = $r;
+}
+
 /* ---------- เพิ่มรถแบบ AJAX ---------- */
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['brand'])) {
     header('Content-Type: application/json; charset=utf-8');
@@ -96,24 +109,29 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['brand'])) {
     $main_image_path = $main_or_err;
 
     // Insert cars (prepared)
+    $type_id = (int)($_POST["car_type"] ?? 0);
+    $gas_id  = (int)($_POST["gas_id"] ?? 0);
+
     $stmt = mysqli_prepare($conn, "INSERT INTO cars 
-        (brand, model, year, license_plate, color, car_type, daily_rate, deposit, status, image_path, description)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    (brand, model, year, license_plate, color, type_id, gas_id, daily_rate, deposit, status, image_path, description)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     mysqli_stmt_bind_param(
         $stmt,
-        "ssissssisss",
+        "ssissii dsss",
         $brand,
         $model,
         $year,
         $license_plate,
         $color,
-        $type,
+        $type_id,
+        $gas_id,
         $daily_rate,
         $deposit,
         $status,
         $main_image_path,
         $description
     );
+
     $ok = mysqli_stmt_execute($stmt);
     $new_id = mysqli_insert_id($conn);
     mysqli_stmt_close($stmt);
@@ -197,7 +215,12 @@ if ($search !== '') {
     $safe = mysqli_real_escape_string($conn, $search);
     $where = "WHERE brand LIKE '%{$safe}%' OR model LIKE '%{$safe}%' OR license_plate LIKE '%{$safe}%'";
 }
-$sql = "SELECT * FROM cars {$where} ORDER BY car_id DESC";
+$sql = "SELECT c.*, ct.type_name, cg.gas_name 
+        FROM cars c
+        LEFT JOIN car_types ct ON c.type_id = ct.type_id
+        LEFT JOIN car_gas cg ON c.gas_id = cg.gas_id
+        {$where} 
+        ORDER BY c.car_id DESC";
 $result = mysqli_query($conn, $sql);
 ?>
 <!DOCTYPE html>
@@ -391,7 +414,7 @@ $result = mysqli_query($conn, $sql);
                                         <td><?= htmlspecialchars($row['year']) ?></td>
                                         <td><?= htmlspecialchars($row['license_plate']) ?></td>
                                         <td><?= htmlspecialchars($row['color']) ?></td>
-                                        <td><?= htmlspecialchars($row['car_type']) ?></td>
+                                        <td><?= htmlspecialchars($row['type_name'] ?? '') ?></td>
                                         <td><?= number_format((float)$row['daily_rate'], 2) ?></td>
                                         <td>
                                             <?php if ($row['status'] === 'available'): ?>
@@ -413,11 +436,12 @@ $result = mysqli_query($conn, $sql);
                                                 data-year="<?= htmlspecialchars($row['year']) ?>"
                                                 data-license="<?= htmlspecialchars($row['license_plate']) ?>"
                                                 data-color="<?= htmlspecialchars($row['color']) ?>"
-                                                data-type="<?= htmlspecialchars($row['car_type']) ?>"
+                                                data-type="<?= htmlspecialchars($row['type_id']) ?>"
+                                                data-gas="<?= htmlspecialchars($row['gas_id']) ?>"
                                                 data-status="<?= htmlspecialchars($row['status']) ?>"
                                                 data-rate="<?= htmlspecialchars($row['daily_rate']) ?>"
                                                 data-deposit="<?= htmlspecialchars($row['deposit']) ?>"
-                                                data-desc="<?= htmlspecialchars($row['description']) ?>"
+                                                data-desc="<?= htmlspecialchars($row['description'] ?? '') ?>"
                                                 data-mainimg="<?= htmlspecialchars($row['image_path']) ?>">
                                                 <i class="fas fa-edit"></i>
                                             </a>
@@ -495,11 +519,21 @@ $result = mysqli_query($conn, $sql);
                                 <label class="form-label">ประเภทรถ</label>
                                 <select name="car_type" class="form-select" required>
                                     <option value="" disabled selected>เลือกประเภท</option>
-                                    <option value="Car">Car</option>
-                                    <option value="Pickup">Pickup</option>
-                                    <option value="Motorcycle">Motorcycle</option>
+                                    <?php foreach ($types as $t): ?>
+                                        <option value="<?= $t['type_id'] ?>"><?= htmlspecialchars($t['type_name']) ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label">เชื้อเพลิง</label>
+                                <select name="gas_id" class="form-select" required>
+                                    <option value="" disabled selected>เลือกเชื้อเพลิง</option>
+                                    <?php foreach ($gases as $g): ?>
+                                        <option value="<?= $g['gas_id'] ?>"><?= htmlspecialchars($g['gas_name']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
                             <div class="col-md-6">
                                 <label class="form-label">ราคารายวัน (บาท)</label>
                                 <input type="number" name="daily_rate" class="form-control" step="50" required>
@@ -579,9 +613,17 @@ $result = mysqli_query($conn, $sql);
                             <div class="col-md-3">
                                 <label class="form-label">ประเภทรถ</label>
                                 <select name="car_type" id="edit_type" class="form-select" required>
-                                    <option value="Car">Car</option>
-                                    <option value="Pickup">Pickup</option>
-                                    <option value="Motorcycle">Motorcycle</option>
+                                    <?php foreach ($types as $t): ?>
+                                        <option value="<?= $t['type_id'] ?>"><?= htmlspecialchars($t['type_name']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">เชื้อเพลิง</label>
+                                <select name="gas_id" id="edit_gas" class="form-select" required>
+                                    <?php foreach ($gases as $g): ?>
+                                        <option value="<?= $g['gas_id'] ?>"><?= htmlspecialchars($g['gas_name']) ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -638,6 +680,7 @@ $result = mysqli_query($conn, $sql);
                 document.getElementById('edit_license').value = btn.getAttribute('data-license');
                 document.getElementById('edit_color').value = btn.getAttribute('data-color');
                 document.getElementById('edit_type').value = btn.getAttribute('data-type');
+                document.getElementById('edit_gas').value = btn.getAttribute('data-gas');
                 document.getElementById('edit_status').value = btn.getAttribute('data-status');
                 document.getElementById('edit_rate').value = btn.getAttribute('data-rate');
                 document.getElementById('edit_deposit').value = btn.getAttribute('data-deposit') ?? 0;

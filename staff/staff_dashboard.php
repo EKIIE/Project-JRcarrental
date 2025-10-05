@@ -32,7 +32,7 @@ $active_rentals = mysqli_query(
     FROM rentals r
     JOIN cars c ON r.car_id = c.car_id
     JOIN bookings b ON r.booking_id = b.booking_id
-    WHERE r.rental_status = 'ongoing'
+    WHERE r.rental_status = 'active'
     ORDER BY r.actual_pickup_date DESC"
 );
 
@@ -69,7 +69,7 @@ $history = mysqli_query(
 if (!$history) {
     echo "<h3 class='text-danger'>SQL Query Error!</h3>";
     // ใช้ die() เพื่อหยุดการทำงานและแสดงข้อผิดพลาดของ MySQL
-    die("Database Error: " . mysqli_error($conn) . " on query: " . 
+    die("Database Error: " . mysqli_error($conn) . " on query: " .
         "SELECT r.*, b.start_date, b.end_date, b.location, c.license_plate, c.brand, c.model, cus.firstname AS cus_fname, cus.lastname AS cus_lname, e1.firstname AS deliver_fname, e1.lastname AS deliver_lname, e2.firstname AS return_fname, e2.lastname AS return_lname FROM rentals r JOIN bookings b ON r.booking_id = b.booking_id JOIN cars c ON r.car_id = c.car_id JOIN customers cus ON r.user_id = cus.user_id LEFT JOIN employees e1 ON r.emp_deliver = e1.employee_id LEFT JOIN employees e2 ON r.emp_returner = e2.employee_id {$where_sql} ORDER BY r.created_at DESC");
 }
 
@@ -133,67 +133,82 @@ function mapLocation($code)
         <div class="mt-4">
             <h4>🚗 รายการรอส่งรถให้ลูกค้า</h4>
             <ul class="list-group shadow-sm rounded-3">
-                <?php while ($row = mysqli_fetch_assoc($pending)): ?>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <?= htmlspecialchars($row['license_plate']) ?> |
-                            <?= date('j M Y', strtotime($row['start_date'])) ?> |
-                            <?= htmlspecialchars(mapLocation($row['location'])) ?>
-                        </div>
-                        <div>
-                            <!-- ปุ่มดูข้อมูลลูกค้า -->
-                            <a href="#" class="btn btn-info btn-sm me-2"
-                                data-bs-toggle="modal"
-                                data-bs-target="#customerModal<?= $row['booking_id'] ?>">
-                                ยืนยันผู้เช่า
-                            </a>
-
-                            <!-- ปุ่มทำสัญญา -->
-                            <?php if ($row['booking_status'] === 'waiting'): ?>
-                                <button class="btn btn-success btn-sm me-2"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#contractModal<?= $row['booking_id'] ?>">
-                                    ทำสัญญา
-                                </button>
-                            <?php else: ?>
-                                <button class="btn btn-secondary btn-sm me-2" disabled>รอยืนยัน</button>
-                            <?php endif; ?>
-
-                            <!-- ปุ่มยกเลิกจอง -->
-                            <form action="cancel_booking.php" method="post" class="d-inline"
-                                onsubmit="return confirm('ยืนยันยกเลิกการจองนี้หรือไม่?');">
-                                <input type="hidden" name="booking_id" value="<?= (int)$row['booking_id'] ?>">
-                                <input type="hidden" name="car_id" value="<?= (int)$row['car_id'] ?>">
-                                <button type="submit" class="btn btn-outline-danger btn-sm">ยกเลิกจอง</button>
-                            </form>
-                        </div>
+                <?php if (mysqli_num_rows($pending) === 0): ?>
+                    <li class="list-group-item text-center text-muted py-3">
+                        — ยังไม่มีการจองใหม่ —
                     </li>
-                <?php endwhile; ?>
+                <?php else: ?>
+                    <?php while ($row = mysqli_fetch_assoc($pending)): ?>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <?= htmlspecialchars($row['license_plate']) ?> |
+                                <?= date('j M Y', strtotime($row['start_date'])) ?> |
+                                <?= htmlspecialchars(mapLocation($row['location'])) ?>
+                            </div>
+                            <div>
+                                <!-- ปุ่มดูข้อมูลลูกค้า -->
+                                <a href="#" class="btn btn-info btn-sm me-2"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#customerModal<?= $row['booking_id'] ?>">
+                                    ยืนยันผู้เช่า
+                                </a>
+
+                                <!-- ปุ่มทำสัญญา -->
+                                <?php if ($row['booking_status'] === 'waiting'): ?>
+                                    <form method="post" action="create_contract.php" class="d-inline">
+                                        <input type="hidden" name="booking_id" value="<?= (int)$row['booking_id'] ?>">
+                                        <input type="hidden" name="user_id" value="<?= (int)$row['user_id'] ?>">
+                                        <input type="hidden" name="car_id" value="<?= (int)$row['car_id'] ?>">
+                                        <button type="submit" class="btn btn-success btn-sm me-2"
+                                            onclick="return confirm('ยืนยันการสร้างสัญญาสำหรับรถทะเบียน <?= htmlspecialchars($row['license_plate']) ?> ใช่ไหม?');">
+                                            ทำสัญญา
+                                        </button>
+                                    </form>
+                                <?php else: ?>
+                                    <button class="btn btn-secondary btn-sm me-2" disabled>รอยืนยัน</button>
+                                <?php endif; ?>
+
+                                <!-- ปุ่มยกเลิกจอง -->
+                                <form action="cancel_booking.php" method="post" class="d-inline"
+                                    onsubmit="return confirm('ยืนยันยกเลิกการจองนี้หรือไม่?');">
+                                    <input type="hidden" name="booking_id" value="<?= (int)$row['booking_id'] ?>">
+                                    <input type="hidden" name="car_id" value="<?= (int)$row['car_id'] ?>">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">ยกเลิกจอง</button>
+                                </form>
+                            </div>
+                        </li>
+                    <?php endwhile; ?>
+                <?php endif; ?>
             </ul>
         </div>
 
         <div class="mt-4">
             <h4>🔁 รถที่กำลังเช่าอยู่</h4>
             <ul class="list-group shadow-sm rounded-3">
-                <?php while ($r = mysqli_fetch_assoc($active_rentals)): ?>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <?= htmlspecialchars($r['license_plate']) ?> |
-                            เริ่มเช่า: <?= date('j M Y', strtotime($r['actual_pickup_date'])) ?> |
-                            กำหนดคืน: <?= date('j M Y', strtotime($r['end_date'])) ?> |
-                            <?= htmlspecialchars(mapLocation($r['location'])) ?>
-                        </div>
-                        <div>
-                            <a href="contract_view.php?booking_id=<?= $r['booking_id'] ?>" class="btn btn-outline-secondary btn-sm">ดูสัญญา</a>
-                            <a href="checkup_form.php?rental_id=<?= $r['rental_id'] ?>" class="btn btn-warning btn-sm">
-                                รับรถคืน
-                            </a>
-                        </div>
+                <?php if (mysqli_num_rows($active_rentals) === 0): ?>
+                    <li class="list-group-item text-center text-muted py-3">
+                        — ไม่มีรถที่กำลังออกเช่า —
                     </li>
-                <?php endwhile; ?>
+                <?php else: ?>
+                    <?php while ($r = mysqli_fetch_assoc($active_rentals)): ?>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <?= htmlspecialchars($r['license_plate']) ?> |
+                                เริ่มเช่า: <?= date('j M Y', strtotime($r['actual_pickup_date'])) ?> |
+                                กำหนดคืน: <?= date('j M Y', strtotime($r['end_date'])) ?> |
+                                <?= htmlspecialchars(mapLocation($r['location'])) ?>
+                            </div>
+                            <div>
+                                <a href="contract_view.php?booking_id=<?= $r['booking_id'] ?>" class="btn btn-outline-secondary btn-sm">ดูสัญญา</a>
+                                <a href="checkup_form.php?rental_id=<?= $r['rental_id'] ?>" class="btn btn-warning btn-sm">
+                                    รับรถคืน
+                                </a>
+                            </div>
+                        </li>
+                    <?php endwhile; ?>
+                <?php endif; ?>
             </ul>
         </div>
-
 
         <div class="mt-5">
             <!-- <a href="../notifications.php" class="btn btn-secondary">ดูการแจ้งเตือน</a> -->
@@ -261,154 +276,154 @@ function mapLocation($code)
                 </div>
             </div>
         </div>
-        <?php endwhile; ?>
-        <!-- End Modal Renter -->
+    <?php endwhile; ?>
+    <!-- End Modal Renter -->
 
-        <!-- Modal Confirm -->
-        <div class="modal fade" id="contractModal<?= $row['booking_id'] ?>" tabindex="-1">
-            <div class="modal-dialog modal-dialog-scrollable modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">ยืนยันข้อมูลสัญญา</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form method="post" action="create_contract.php">
-                            <input type="hidden" name="booking_id" value="<?= (int)$row['booking_id'] ?>">
-                            <input type="hidden" name="user_id" value="<?= (int)$row['user_id'] ?>">
-                            <input type="hidden" name="car_id" value="<?= (int)$row['car_id'] ?>">
+    <!-- Modal Confirm -->
+    <div class="modal fade" id="contractModal<?= $row['booking_id'] ?>" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">ยืนยันข้อมูลสัญญา</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="create_contract.php">
+                        <input type="hidden" name="booking_id" value="<?= (int)$row['booking_id'] ?>">
+                        <input type="hidden" name="user_id" value="<?= (int)$row['user_id'] ?>">
+                        <input type="hidden" name="car_id" value="<?= (int)$row['car_id'] ?>">
 
-                            <div class="mb-3">
-                                <label class="form-label">ชื่อผู้เช่า</label>
-                                <input type="text" class="form-control" value="<?= $customer['firstname'] . ' ' . $customer['lastname'] ?>" readonly>
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label">ชื่อผู้เช่า</label>
+                            <input type="text" class="form-control" value="<?= $customer['firstname'] . ' ' . $customer['lastname'] ?>" readonly>
+                        </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">วันรับรถ</label>
-                                <input type="text" class="form-control" value="<?= date('d/m/Y', strtotime($row['start_date'])) ?>" readonly>
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label">วันรับรถ</label>
+                            <input type="text" class="form-control" value="<?= date('d/m/Y', strtotime($row['start_date'])) ?>" readonly>
+                        </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">วันคืนรถ</label>
-                                <input type="text" class="form-control" value="<?= date('d/m/Y', strtotime($row['end_date'])) ?>" readonly>
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label">วันคืนรถ</label>
+                            <input type="text" class="form-control" value="<?= date('d/m/Y', strtotime($row['end_date'])) ?>" readonly>
+                        </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">สถานที่รับรถ</label>
-                                <select name="location" class="form-select" required>
-                                    <option value="<?= htmlspecialchars(mapLocation($row['location'])) ?>" selected><?= htmlspecialchars(mapLocation($row['location'])) ?></option>
-                                    <option value="v1">หน้าร้าน</option>
-                                    <option value="v2">สนามบินเชียงใหม่</option>
-                                    <option value="v3">ปั๊มปตทข้างสนามบิน</option>
-                                </select>
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label">สถานที่รับรถ</label>
+                            <select name="location" class="form-select" required>
+                                <option value="<?= htmlspecialchars(mapLocation($row['location'])) ?>" selected><?= htmlspecialchars(mapLocation($row['location'])) ?></option>
+                                <option value="v1">หน้าร้าน</option>
+                                <option value="v2">สนามบินเชียงใหม่</option>
+                                <option value="v3">ปั๊มปตทข้างสนามบิน</option>
+                            </select>
+                        </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">หมายเหตุ (ถ้ามี)</label>
-                                <textarea class="form-control" name="notes"></textarea>
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label">หมายเหตุ (ถ้ามี)</label>
+                            <textarea class="form-control" name="notes"></textarea>
+                        </div>
 
-                            <div class="text-end">
-                                <button type="submit" class="btn btn-success">ยืนยันและบันทึกสัญญา</button>
-                            </div>
-                        </form>
-                    </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-success">ยืนยันและบันทึกสัญญา</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
-        <!-- End Modal Confirm -->
+    </div>
+    <!-- End Modal Confirm -->
 
-        <!-- Modal History -->
-        <div class="modal fade" id="historyModal" tabindex="-1">
-            <div class="modal-dialog modal-xl modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">ประวัติรายการเช่า</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
+    <!-- Modal History -->
+    <div class="modal fade" id="historyModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">ประวัติรายการเช่า</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
 
-                        <!-- ฟิลเตอร์ -->
-                        <form method="get" class="row g-2 mb-3">
-                            <div class="col-md-3">
-                                <select name="month" class="form-select">
-                                    <option value="">-- ทั้งหมด --</option>
-                                    <?php for ($m = 1; $m <= 12; $m++): ?>
-                                        <option value="<?= $m ?>" <?= ($_GET['month'] ?? '') == $m ? 'selected' : '' ?>>
-                                            <?= date("F", mktime(0, 0, 0, $m, 1)) ?>
-                                        </option>
-                                    <?php endfor; ?>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <input type="text" name="plate" class="form-control" placeholder="ทะเบียนรถ" value="<?= htmlspecialchars($_GET['plate'] ?? '') ?>">
-                            </div>
-                            <div class="col-md-2">
-                                <button class="btn btn-primary">ค้นหา</button>
-                            </div>
-                        </form>
+                    <!-- ฟิลเตอร์ -->
+                    <form method="get" class="row g-2 mb-3">
+                        <div class="col-md-3">
+                            <select name="month" class="form-select">
+                                <option value="">-- ทั้งหมด --</option>
+                                <?php for ($m = 1; $m <= 12; $m++): ?>
+                                    <option value="<?= $m ?>" <?= ($_GET['month'] ?? '') == $m ? 'selected' : '' ?>>
+                                        <?= date("F", mktime(0, 0, 0, $m, 1)) ?>
+                                    </option>
+                                <?php endfor; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" name="plate" class="form-control" placeholder="ทะเบียนรถ" value="<?= htmlspecialchars($_GET['plate'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary">ค้นหา</button>
+                        </div>
+                    </form>
 
-                        <!-- ตาราง -->
-                        <table class="table table-bordered table-striped">
-                            <thead>
+                    <!-- ตาราง -->
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>ทะเบียน</th>
+                                <th>ผู้เช่า</th>
+                                <th>วันรับ</th>
+                                <th>วันคืน</th>
+                                <th>สถานะ</th>
+                                <th>จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($history_data as $h): ?>
                                 <tr>
-                                    <th>ทะเบียน</th>
-                                    <th>ผู้เช่า</th>
-                                    <th>วันรับ</th>
-                                    <th>วันคืน</th>
-                                    <th>สถานะ</th>
-                                    <th>จัดการ</th>
+                                    <td><?= htmlspecialchars($h['license_plate']) ?></td>
+                                    <td><?= htmlspecialchars($h['cus_fname'] . ' ' . $h['cus_lname']) ?></td>
+                                    <td><?= date('d/m/Y', strtotime($h['start_date'])) ?></td>
+                                    <td><?= date('d/m/Y', strtotime($h['end_date'])) ?></td>
+                                    <td><?= htmlspecialchars($h['rental_status']) ?></td>
+                                    <td>
+                                        <button type="button" class="btn btn-info btn-sm" onclick="openDetail('<?= $h['rental_id'] ?>')">
+                                            รายละเอียด
+                                        </button>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($history_data as $h): ?>
-                                    <tr>
-                                        <td><?= htmlspecialchars($h['license_plate']) ?></td>
-                                        <td><?= htmlspecialchars($h['cus_fname'] . ' ' . $h['cus_lname']) ?></td>
-                                        <td><?= date('d/m/Y', strtotime($h['start_date'])) ?></td>
-                                        <td><?= date('d/m/Y', strtotime($h['end_date'])) ?></td>
-                                        <td><?= htmlspecialchars($h['rental_status']) ?></td>
-                                        <td>
-                                            <button type="button" class="btn btn-info btn-sm" onclick="openDetail('<?= $h['rental_id'] ?>')">
-                                                รายละเอียด
-                                            </button>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
 
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End Modal History -->
+
+    <!-- Modal History Detail -->
+    <?php foreach ($history_data as $h): ?>
+        <div class="modal fade" id="histDetail<?= $h['rental_id'] ?>" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">รายละเอียดการเช่า</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>ลูกค้า:</strong> <?= $h['cus_fname'] . ' ' . $h['cus_lname'] ?></p>
+                        <p><strong>ทะเบียนรถ:</strong> <?= $h['license_plate'] ?> (<?= $h['brand'] . ' ' . $h['model'] ?>)</p>
+                        <p><strong>วันรับ:</strong> <?= $h['start_date'] ?></p>
+                        <p><strong>วันคืน:</strong> <?= $h['end_date'] ?></p>
+                        <p><strong>สถานที่:</strong> <?= htmlspecialchars(mapLocation($h['location'])) ?></p>
+                        <p><strong>พนักงานส่ง:</strong> <?= $h['deliver_fname'] . ' ' . $h['deliver_lname'] ?></p>
+                        <p><strong>พนักงานรับคืน:</strong> <?= $h['return_fname'] . ' ' . $h['return_lname'] ?></p>
+                        <p><strong>สถานะการเช่า:</strong> <?= $h['rental_status'] ?></p>
+                        <p><strong>ราคารวม:</strong> <?= number_format($h['total_amount']) ?> บาท</p>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- End Modal History -->
-
-        <!-- Modal History Detail -->
-        <?php foreach ($history_data as $h): ?>
-            <div class="modal fade" id="histDetail<?= $h['rental_id'] ?>" tabindex="-1">
-                <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">รายละเอียดการเช่า</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p><strong>ลูกค้า:</strong> <?= $h['cus_fname'] . ' ' . $h['cus_lname'] ?></p>
-                            <p><strong>ทะเบียนรถ:</strong> <?= $h['license_plate'] ?> (<?= $h['brand'] . ' ' . $h['model'] ?>)</p>
-                            <p><strong>วันรับ:</strong> <?= $h['start_date'] ?></p>
-                            <p><strong>วันคืน:</strong> <?= $h['end_date'] ?></p>
-                            <p><strong>สถานที่:</strong> <?= htmlspecialchars(mapLocation($h['location'])) ?></p>
-                            <p><strong>พนักงานส่ง:</strong> <?= $h['deliver_fname'] . ' ' . $h['deliver_lname'] ?></p>
-                            <p><strong>พนักงานรับคืน:</strong> <?= $h['return_fname'] . ' ' . $h['return_lname'] ?></p>
-                            <p><strong>สถานะการเช่า:</strong> <?= $h['rental_status'] ?></p>
-                            <p><strong>ราคารวม:</strong> <?= number_format($h['total_amount']) ?> บาท</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        <?php endforeach; ?>
-        <!-- End Modal History Detail -->
+    <?php endforeach; ?>
+    <!-- End Modal History Detail -->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

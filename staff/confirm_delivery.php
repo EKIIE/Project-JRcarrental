@@ -34,16 +34,6 @@ try {
     throw new Exception(mysqli_stmt_error($stmt1));
   }
 
-  // 2) เพิ่ม record ลงใน rentals
-  $sql2 = "INSERT INTO rentals (booking_id, user_id, car_id, emp_deliver, rental_status, actual_pickup_date, created_at)
-         VALUES (?, ?, ?, ?, 'ongoing', NOW(), NOW())";
-  $stmt2 = mysqli_prepare($conn, $sql2);
-  mysqli_stmt_bind_param($stmt2, 'iiii', $booking_id, $user_id, $car_id, $emp_id);
-
-  if (!mysqli_stmt_execute($stmt2)) {
-    throw new Exception(mysqli_stmt_error($stmt2));
-  }
-
   mysqli_commit($conn);
   header("Location: staff_dashboard.php?ok=1");
   exit();

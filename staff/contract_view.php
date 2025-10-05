@@ -12,13 +12,16 @@ $sql = "SELECT
   r.rental_id,
   b.start_date, b.end_date, b.total_price, 
   c.brand, c.model, c.license_plate, c.daily_rate, c.deposit,
+  cg.gas_name,
   cus.firstname, cus.lastname, cus.phone_number, cus.email
 FROM rentals r
 JOIN bookings b ON r.booking_id = b.booking_id
 JOIN cars c ON r.car_id = c.car_id
+LEFT JOIN car_gas cg ON c.gas_id = cg.gas_id
 JOIN customers cus ON r.user_id = cus.user_id
 WHERE r.booking_id = $booking_id
 LIMIT 1";
+
 
 $result = mysqli_query($conn, $sql);
 $data = mysqli_fetch_assoc($result);
@@ -199,11 +202,12 @@ $deposit20   = $rent_total * 0.20; // มัดจำ 20%
                 </small>
                 <!-- 5 -->
                 <li style="font-size: 0.55rem;">
-                    The vehicle is to be returned with a full tank. If this is not the case, the Renter shall
-                    pay THB 2,000 xxน้ำมันxx.
+                    The vehicle is to be returned with a full tank of <strong><?= htmlspecialchars($data['gas_name'] ?? '') ?></strong>.
+                    If this is not the case, the Renter shall pay THB 2,000.
                 </li>
                 <small style="font-size: 0.45rem;">
-                    ผู้เช่าจะต้องเติมน้ำมันรถยนต์ให้เช่าเต็มถังในเวลาครบกำหนด หากไม่เช่นนั้นผู้เช่าจะต้องเสียค่าใช้จ่ายเพิ่ม เป็นเงิน 2,000 บาท
+                    ผู้เช่าจะต้องเติมน้ำมัน <strong><?= htmlspecialchars($data['gas_name'] ?? '') ?></strong> ให้เต็มถังในเวลาครบกำหนด
+                    หากไม่เช่นนั้นผู้เช่าจะต้องเสียค่าใช้จ่ายเพิ่ม เป็นเงิน 2,000 บาท
                 </small>
                 <!-- 6 -->
                 <li style="font-size: 0.55rem;">

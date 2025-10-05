@@ -59,11 +59,94 @@ $expires_at = $_SESSION['expires_at'];
     <title>ชำระเงิน</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #fdfaf6;
+            color: #3a2c2c;
+            margin: 0;
+            padding: 0;
+        }
+
+        h2 {
+            font-weight: 600;
+            color: #3a2c2c;
+        }
+
+        p {
+            color: #5c4b3a;
+        }
+
+        /* QR Section */
+        .text-center {
+            max-width: 600px;
+            margin: auto;
+            background: #fffaf4;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        img {
+            border-radius: 0.75rem;
+            border: 1px solid #f1e3d3;
+        }
+
+        /* Timer */
         #timer {
             font-size: 1.25rem;
-            font-weight: 600
+            font-weight: 600;
+            color: #b35d2e;
+        }
+
+        /* Form */
+        form {
+            background-color: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+        }
+
+        .form-control {
+            border-radius: 0.5rem;
+            border-color: #e5d7c8;
+        }
+
+        .form-control:focus {
+            border-color: #c7a987;
+            box-shadow: 0 0 0 0.15rem rgba(212, 180, 153, 0.3);
+        }
+
+        /* Buttons */
+        .btn-success {
+            background-color: #9c7b5b;
+            border: none;
+            border-radius: 0.6rem;
+            font-weight: 500;
+        }
+
+        .btn-success:hover {
+            background-color: #7e634a;
+        }
+
+        /* Responsive */
+        @media (max-width: 576px) {
+            .text-center {
+                padding: 1.25rem;
+            }
+
+            h2 {
+                font-size: 1.3rem;
+            }
+
+            img {
+                width: 240px !important;
+                height: auto !important;
+            }
         }
     </style>
+
 </head>
 
 <body class="text-center py-5">

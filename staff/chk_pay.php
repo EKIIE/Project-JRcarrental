@@ -29,7 +29,7 @@ if (!move_uploaded_file($_FILES['slip']['tmp_name'], $target)) {
 // อัปเดตตาราง checkups
 mysqli_query($conn, "UPDATE checkups 
                      SET payment_slip = '".mysqli_real_escape_string($conn,$filename)."',
-                         payment_verified = 0,  /* รอตรวจ */
+                         payment_verified = 1,
                          paid_cash = 0
                      WHERE checkup_id = $checkup_id");
 

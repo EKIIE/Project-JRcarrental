@@ -109,6 +109,117 @@ if (!$car) {
   <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
   <!-- Pikaday JS -->
   <script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
+  
+  <style>
+    /* 🧁 JR Car Rental Theme */
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
+
+    body {
+      font-family: 'Kanit', sans-serif;
+      background-color: #fdfaf6;
+      color: #3a2c2c;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Navbar */
+    .navbar {
+      font-weight: 500;
+      background-color: #3a2c2c !important;
+    }
+
+    .navbar .nav-link,
+    .navbar-brand {
+      color: #fff !important;
+      transition: 0.2s ease;
+    }
+
+    .navbar .nav-link:hover {
+      color: #d4b499 !important;
+    }
+
+    /* Card & Container */
+    .container {
+      max-width: 1200px;
+    }
+
+    .card {
+      border: none;
+      border-radius: 1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+    }
+
+    .card-body {
+      padding: 1.25rem;
+    }
+
+    /* Headings */
+    h2,
+    h5 {
+      font-weight: 600;
+      color: #3a2c2c;
+    }
+
+    /* Buttons */
+    .btn {
+      border-radius: 0.6rem;
+      font-weight: 500;
+    }
+
+    .btn-success {
+      background-color: #9c7b5b;
+      border: none;
+    }
+
+    .btn-success:hover {
+      background-color: #7e634a;
+    }
+
+    .btn-outline-secondary {
+      color: #3a2c2c;
+      border-color: #d4b499;
+    }
+
+    .btn-outline-secondary:hover {
+      background-color: #d4b499;
+      color: #fff;
+    }
+
+    /* Form */
+    .form-control,
+    .form-select {
+      border-radius: 0.5rem;
+      border-color: #e5d7c8;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      border-color: #c7a987;
+      box-shadow: 0 0 0 0.15rem rgba(212, 180, 153, 0.3);
+    }
+
+    /* Breakdown box */
+    #breakdown {
+      background-color: #fffaf4;
+      border: 1px solid #f1e3d3;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      h2 {
+        font-size: 1.5rem;
+      }
+
+      .card img {
+        height: 180px !important;
+      }
+    }
+  </style>
 
 </head>
 

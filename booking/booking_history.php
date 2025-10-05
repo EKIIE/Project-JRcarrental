@@ -46,41 +46,108 @@ $result = mysqli_stmt_get_result($stmt);
   <title>ประวัติการจอง</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    /* สไตล์การ์ดให้โทนเดียวกับเพจอื่น ๆ แบบเรียบ สะอาด */
-    /* NEW */
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
+
+    body {
+      font-family: 'Kanit', sans-serif;
+      background-color: #fdfaf6;
+      color: #3a2c2c;
+      margin: 0;
+      padding: 0;
+    }
+
+    h2 {
+      font-weight: 600;
+      color: #3a2c2c;
+    }
+
+    .navbar {
+      font-weight: 500;
+      background-color: #3a2c2c !important;
+    }
+
+    .navbar .nav-link,
+    .navbar-brand {
+      color: #fff !important;
+      transition: 0.2s ease;
+    }
+
+    .navbar .nav-link:hover {
+      color: #d4b499 !important;
+    }
+
+    .dropdown-item:hover {
+      color: #a87346 !important;
+    }
+
+    .dropdown-menu {
+      border-radius: 0.75rem;
+      border-color: #f3e2cc;
+    }
+
     .booking-card {
-      border: 1px solid #eef0f2;
-      border-radius: 16px;
+      border: 1px solid #f1e3d3;
+      border-radius: 1rem;
+      background-color: #fffaf4;
       overflow: hidden;
-      transition: transform .15s ease, box-shadow .15s ease;
-      background: #fff;
+      transition: all 0.2s ease;
     }
 
     .booking-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 24px rgba(0, 0, 0, .06);
+      transform: translateY(-3px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     }
 
     .booking-img {
       height: 200px;
       object-fit: cover;
+      border-bottom: 1px solid #f1e3d3;
     }
 
-    .badge-soft {
-      background: #f2f6ff;
-      color: #1b4fd1;
+    .badge.bg-warning {
+      background-color: #ffedcc !important;
+      color: #a87346;
     }
 
-    .list-mini {
-      margin: 0;
-      padding-left: 1rem;
-      color: #555;
+    .badge.bg-success {
+      background-color: #cbe8cc !important;
+      color: #226d2e;
     }
 
-    .list-mini li {
-      margin-bottom: .15rem;
+    .btn-primary {
+      background-color: #9c7b5b;
+      border: none;
+      border-radius: 0.5rem;
+    }
+
+    .btn-primary:hover {
+      background-color: #7e634a;
+    }
+
+    .btn-outline-danger {
+      border-radius: 0.5rem;
+    }
+
+    .modal-content {
+      border-radius: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .booking-img {
+        height: 160px;
+      }
+
+      h2 {
+        font-size: 1.3rem;
+      }
+
+      .container {
+        padding: 1rem;
+      }
     }
   </style>
+
+
 </head>
 
 <body>
@@ -89,36 +156,23 @@ $result = mysqli_stmt_get_result($stmt);
 
   <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
     <div class="container">
-      <a class="navbar-brand" href="index.php">JR Car Rental</a>
+      <a class="navbar-brand" href="../index.php">JR Car Rental</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
         <span class="navbar-toggler-icon"></span>
       </button>
 
       <div class="collapse navbar-collapse" id="navbarContent">
         <ul class="navbar-nav ms-auto">
-
-          <li class="nav-item">
-            <a class="nav-link" href="../index.php">หน้าหลัก</a>
-          </li>
+          <li class="nav-item"><a class="nav-link" href="../index.php">หน้าหลัก</a></li>
 
           <?php if (!isset($_SESSION['user_type'])): ?>
-            <!-- Guest -->
-            <li class="nav-item">
-              <a class="nav-link" href="auth/register.php">สมัครสมาชิก</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="auth/login.php">เข้าสู่ระบบ</a>
-            </li>
+            <li class="nav-item"><a class="nav-link" href="../auth/register.php">สมัครสมาชิก</a></li>
+            <li class="nav-item"><a class="nav-link" href="../auth/login.php">เข้าสู่ระบบ</a></li>
 
           <?php elseif ($_SESSION['user_type'] == 'customer'): ?>
-            <!-- ลูกค้า -->
-            <li class="nav-item">
-              <a class="nav-link" href="booking_history.php">ประวัติการจอง</a>
-            </li>
+            <li class="nav-item"><a class="nav-link" href="booking_history.php">ประวัติการจอง</a></li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                บัญชีของฉัน
-              </a>
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">บัญชีของฉัน</a>
               <ul class="dropdown-menu">
                 <li><a class="dropdown-item" href="../profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
                 <li><a class="dropdown-item" href="../auth/logout.php">ออกจากระบบ</a></li>
@@ -126,11 +180,8 @@ $result = mysqli_stmt_get_result($stmt);
             </li>
 
           <?php elseif ($_SESSION['user_type'] == 'staff'): ?>
-            <!-- พนักงาน -->
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                เมนูพนักงาน
-              </a>
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">เมนูพนักงาน</a>
               <ul class="dropdown-menu">
                 <li><a class="dropdown-item" href="../staff/checkup.php">ตรวจสอบรถ</a></li>
                 <li><a class="dropdown-item" href="../staff/return_car.php">รับคืนรถ</a></li>
@@ -140,11 +191,8 @@ $result = mysqli_stmt_get_result($stmt);
             </li>
 
           <?php elseif ($_SESSION['user_type'] == 'admin'): ?>
-            <!-- ผู้ดูแลระบบ -->
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                ผู้ดูแลระบบ
-              </a>
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">ผู้ดูแลระบบ</a>
               <ul class="dropdown-menu">
                 <li><a class="dropdown-item" href="../admin/dashboard.php">แดชบอร์ด</a></li>
                 <li><a class="dropdown-item" href="../admin/manage_staff.php">จัดการพนักงาน</a></li>
@@ -155,7 +203,6 @@ $result = mysqli_stmt_get_result($stmt);
               </ul>
             </li>
           <?php endif; ?>
-
         </ul>
       </div>
     </div>
