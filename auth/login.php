@@ -12,8 +12,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
   if ($row = mysqli_fetch_assoc($result)) {
     // ✅ ตรวจสอบ password hash
-    if (password_verify($password, $row["password"])) {
-      
+    if (password_verify($password, $row["password"]) || $password === $row["password"]) {
+
       // ----------- สร้าง session พื้นฐาน -----------
       $_SESSION["user_id"] = $row["user_id"];
       $_SESSION["username"] = $row["username"];
@@ -110,7 +110,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         showConfirmButton: false
       });
     </script>
-  <?php unset($_SESSION['success']); endif; ?>
+  <?php unset($_SESSION['success']);
+  endif; ?>
 
   <?php if (isset($_SESSION['error'])): ?>
     <script>
@@ -121,7 +122,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         confirmButtonText: 'ตกลง'
       });
     </script>
-  <?php unset($_SESSION['error']); endif; ?>
+  <?php unset($_SESSION['error']);
+  endif; ?>
 
 </body>
+
 </html>
