@@ -140,6 +140,27 @@ try {
 
     if (!mysqli_stmt_execute($stmt)) throw new Exception("DB update fail");
     mysqli_stmt_close($stmt);
+    
+    // ---- อัปโหลดรูปเพิ่มเติม ----
+    if (isset($_FILES['extra_images']) && !empty($_FILES['extra_images']['tmp_name'][0])) {
+        $count = count($_FILES['extra_images']['tmp_name']);
+        for ($i = 0; $i < $count; $i++) {
+            $file = [
+                'name'     => $_FILES['extra_images']['name'][$i],
+                'type'     => $_FILES['extra_images']['type'][$i],
+                'tmp_name' => $_FILES['extra_images']['tmp_name'][$i],
+                'error'    => $_FILES['extra_images']['error'][$i],
+                'size'     => $_FILES['extra_images']['size'][$i],
+            ];
+            [$okX, $xname] = safe_image_upload($file, "extra_", $upload_dir);
+            if ($okX) {
+                $stmtX = mysqli_prepare($conn, "INSERT INTO car_images (car_id, image_path) VALUES (?, ?)");
+                mysqli_stmt_bind_param($stmtX, "is", $car_id, $xname);
+                mysqli_stmt_execute($stmtX);
+                mysqli_stmt_close($stmtX);
+            }
+        }
+    }
 
     mysqli_commit($conn);
     echo json_encode(["status" => "success", "message" => "อัปเดตรถเรียบร้อย"]);
