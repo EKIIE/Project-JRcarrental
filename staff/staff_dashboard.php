@@ -121,7 +121,7 @@ function mapLocation($code)
         <div class="container-fluid">
             <a class="navbar-brand fw-bold" href="#">JR Car Rental</a>
             <div class="d-flex">
-                <a href="../profile.php" class="btn btn-outline-light btn-sm me-2">โปรไฟล์</a>
+                <a href="../profile.php" class="btn btn-outline-light btn-sm me-2">ข้อมูลส่วนตัว</a>
                 <a href="../auth/logout.php" class="btn btn-danger btn-sm">ออกจากระบบ</a>
             </div>
         </div>

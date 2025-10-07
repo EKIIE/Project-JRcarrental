@@ -52,7 +52,7 @@ if (!$car) {
               บัญชีของฉัน
             </a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="../profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
+              <li><a class="dropdown-item" href="../profile.php">ข้อมูลส่วนตัว</a></li>
               <li><a class="dropdown-item" href="../auth/logout.php">ออกจากระบบ</a></li>
             </ul>
           </li>
@@ -66,7 +66,7 @@ if (!$car) {
             <ul class="dropdown-menu">
               <li><a class="dropdown-item" href="../staff/checkup.php">ตรวจสอบรถ</a></li>
               <li><a class="dropdown-item" href="../staff/return_car.php">รับคืนรถ</a></li>
-              <li><a class="dropdown-item" href="../profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
+              <li><a class="dropdown-item" href="../profile.php">ข้อมูลส่วนตัว</a></li>
               <li><a class="dropdown-item" href="../auth/logout.php">ออกจากระบบ</a></li>
             </ul>
           </li>
@@ -82,7 +82,7 @@ if (!$car) {
               <li><a class="dropdown-item" href="../admin/manage_staff.php">จัดการพนักงาน</a></li>
               <li><a class="dropdown-item" href="../admin/manage_cars.php">จัดการรถ</a></li>
               <li><a class="dropdown-item" href="../admin/manage_bookings.php">จัดการการจอง</a></li>
-              <li><a class="dropdown-item" href="../profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
+              <li><a class="dropdown-item" href="../profile.php">ข้อมูลส่วนตัว</a></li>
               <li><a class="dropdown-item" href="../auth/logout.php">ออกจากระบบ</a></li>
             </ul>
           </li>

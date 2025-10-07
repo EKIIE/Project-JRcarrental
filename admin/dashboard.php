@@ -585,7 +585,7 @@ while ($r = mysqli_fetch_assoc($rental_per_car)) {
                             <li><a class="dropdown-item" href="manage_staff.php">จัดการพนักงาน</a></li>
                             <li><a class="dropdown-item" href="manage_cars.php">จัดการรถ</a></li>
                             <li><a class="dropdown-item" href="../staff/staff_dashboard.php">จัดการการจอง</a></li>
-                            <li><a class="dropdown-item" href="../profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
+                            <li><a class="dropdown-item" href="../profile.php">ข้อมูลส่วนตัว</a></li>
                             <li><a class="dropdown-item" href="../auth/logout.php">ออกจากระบบ</a></li>
                         </ul>
                     </li>

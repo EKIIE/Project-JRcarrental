@@ -115,7 +115,7 @@ session_start();
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">บัญชีของฉัน</a>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
+                <li><a class="dropdown-item" href="profile.php">ข้อมูลส่วนตัว</a></li>
                 <li><a class="dropdown-item" href="auth/logout.php">ออกจากระบบ</a></li>
               </ul>
             </li>

@@ -63,7 +63,7 @@ $info = $infoQuery ? mysqli_fetch_assoc($infoQuery) : [];
                             บัญชีของฉัน
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
+                            <li><a class="dropdown-item" href="profile.php">ข้อมูลส่วนตัว</a></li>
                             <li><a class="dropdown-item" href="auth/logout.php">ออกจากระบบ</a></li>
                         </ul>
                     </li>
@@ -77,7 +77,7 @@ $info = $infoQuery ? mysqli_fetch_assoc($infoQuery) : [];
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="staff/checkup.php">ตรวจสอบรถ</a></li>
                             <li><a class="dropdown-item" href="staff/return_car.php">รับคืนรถ</a></li>
-                            <li><a class="dropdown-item" href="profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
+                            <li><a class="dropdown-item" href="profile.php">ข้อมูลส่วนตัว</a></li>
                             <li><a class="dropdown-item" href="auth/logout.php">ออกจากระบบ</a></li>
                         </ul>
                     </li>
@@ -93,7 +93,7 @@ $info = $infoQuery ? mysqli_fetch_assoc($infoQuery) : [];
                             <li><a class="dropdown-item" href="admin/manage_staff.php">จัดการพนักงาน</a></li>
                             <li><a class="dropdown-item" href="admin/manage_cars.php">จัดการรถ</a></li>
                             <li><a class="dropdown-item" href="admin/manage_bookings.php">จัดการการจอง</a></li>
-                            <li><a class="dropdown-item" href="profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
+                            <li><a class="dropdown-item" href="profile.php">ข้อมูลส่วนตัว</a></li>
                             <li><a class="dropdown-item" href="auth/logout.php">ออกจากระบบ</a></li>
                         </ul>
                     </li>
@@ -116,10 +116,76 @@ $info = $infoQuery ? mysqli_fetch_assoc($infoQuery) : [];
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
+        body {
+            font-family: "Kanit", sans-serif;
+            background: linear-gradient(180deg, #f9f6f1 0%, #f4ede6 100%);
+            color: #3a2c2c;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: #3a2c2c !important;
+        }
+
+        .navbar .nav-link,
+        .navbar-brand {
+            color: #fff !important;
+            transition: 0.2s ease;
+        }
+
+        .navbar .nav-link:hover {
+            color: #d4b499 !important;
+        }
+
+        /* กล่องโปรไฟล์หลัก */
+        .card {
+            border: none;
+            background-color: #fffdf8;
+            border-radius: 1.2rem;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            color: #4b382a;
+            font-weight: 600;
+        }
+
+        /* ปุ่ม */
+        .btn-primary {
+            background-color: #b78752;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #8c5a2e;
+        }
+
+        .btn-secondary {
+            background-color: #d4b499;
+            color: #3a2c2c;
+            border: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: #b78752;
+            color: #fff;
+        }
+
+        .btn-outline-dark {
+            border-color: #3a2c2c;
+            color: #3a2c2c;
+        }
+
+        .btn-outline-dark:hover {
+            background-color: #3a2c2c;
+            color: #fffdf8;
+        }
+
+        /* โปรไฟล์รูป */
         .profile-img-wrapper {
             position: relative;
-            width: 120px;
-            height: 120px;
+            width: 130px;
+            height: 130px;
             margin: 0 auto 15px;
             cursor: pointer;
         }
@@ -129,16 +195,17 @@ $info = $infoQuery ? mysqli_fetch_assoc($infoQuery) : [];
             height: 100%;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid #ccc;
+            border: 3px solid #d4b499;
+            background-color: #fffaf5;
         }
 
         .edit-icon {
             position: absolute;
             bottom: 0;
             right: 0;
-            background: #000000aa;
+            background: #3a2c2cae;
             color: white;
-            padding: 5px;
+            padding: 6px;
             border-radius: 50%;
             font-size: 14px;
             display: none;
@@ -148,6 +215,7 @@ $info = $infoQuery ? mysqli_fetch_assoc($infoQuery) : [];
             display: block;
         }
 
+        /* Popup */
         .popup-overlay {
             position: fixed;
             top: 0;
@@ -162,15 +230,64 @@ $info = $infoQuery ? mysqli_fetch_assoc($infoQuery) : [];
         }
 
         .popup-content {
-            background: white;
+            background: #fffdf8;
             padding: 20px;
             border-radius: 10px;
             text-align: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
         }
 
         .popup-content img {
             max-width: 100%;
             max-height: 500px;
+            border-radius: 8px;
+        }
+
+        /* Modal edit */
+        .modal-content {
+            background-color: #fffdf8;
+            border-radius: 1rem;
+            border: 1px solid #f1e3d3;
+        }
+
+        .modal-header,
+        .modal-footer {
+            border: none;
+        }
+
+        .modal-title {
+            color: #4b382a;
+            font-weight: 600;
+        }
+
+        .form-label {
+            color: #4b382a;
+            font-weight: 500;
+        }
+
+        /* footer */
+        footer {
+            background-color: #3a2c2c;
+            color: #f8f4ee;
+            padding: 20px 0;
+            margin-top: 60px;
+            text-align: center;
+        }
+
+        /* SweetAlert theme */
+        .swal2-popup {
+            font-family: "Kanit", sans-serif !important;
+            border-radius: 12px !important;
+            background: #fffdf8 !important;
+            color: #3a2c2c !important;
+        }
+
+        .swal2-title {
+            color: #4b382a !important;
+        }
+
+        .swal2-styled.swal2-confirm {
+            background-color: #b78752 !important;
         }
     </style>
 </head>
@@ -250,10 +367,10 @@ $info = $infoQuery ? mysqli_fetch_assoc($infoQuery) : [];
                     </div>
                     <div class="mb-3">
                         <label class="form-label">เบอร์โทร</label>
-                        <input type="tel" name="phone_number" class="form-control" 
-                               value="<?= htmlspecialchars($user['phone_number']) ?>" 
-                               pattern="[0-9]{9,10}" 
-                               title="กรอกตัวเลข 9-10 หลัก" required>
+                        <input type="tel" name="phone_number" class="form-control"
+                            value="<?= htmlspecialchars($info['phone_number'] ?? '') ?>"
+                            pattern="[0-9]{9,10}"
+                            title="กรอกตัวเลข 9-10 หลัก" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">ที่อยู่</label>

@@ -308,7 +308,7 @@ $result = mysqli_query($conn, $sql);
                             <li><a class="dropdown-item active" href="manage_staff.php">จัดการพนักงาน</a></li>
                             <li><a class="dropdown-item" href="manage_cars.php">จัดการรถ</a></li>
                             <li><a class="dropdown-item" href="manage_bookings.php">จัดการการจอง</a></li>
-                            <li><a class="dropdown-item" href="../profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
+                            <li><a class="dropdown-item" href="../profile.php">ข้อมูลส่วนตัว</a></li>
                             <li><a class="dropdown-item" href="../auth/logout.php">ออกจากระบบ</a></li>
                         </ul>
                     </li>

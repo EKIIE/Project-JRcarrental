@@ -71,7 +71,7 @@ $rs = mysqli_query($conn, $sql);
             <li><a class="dropdown-item" href="manage_cars.php">จัดการรถ</a></li>
             <li><a class="dropdown-item" href="manage_booking.php">จัดการการจอง</a></li>
             <li><a class="dropdown-item active" href="customers.php">ดูข้อมูลลูกค้า</a></li>
-            <li><a class="dropdown-item" href="../profile.php">แก้ไขข้อมูลส่วนตัว</a></li>
+            <li><a class="dropdown-item" href="../profile.php">ข้อมูลส่วนตัว</a></li>
             <li><a class="dropdown-item" href="../auth/logout.php">ออกจากระบบ</a></li>
           </ul>
         </li>
