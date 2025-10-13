@@ -38,7 +38,7 @@ function connect_db()
             die("Connection failed: " . mysqli_connect_error());
         }
     } else {
-        // echo "<p style='color:green;'>Connected to: " . $dbname . "</p>";
+        echo "<p style='color:green;'>Connected to: " . $dbname . "</p>";
     }
 
     mysqli_set_charset($conn, "utf8");
