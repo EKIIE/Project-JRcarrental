@@ -27,7 +27,16 @@ function connect_db()
     $conn = mysqli_connect($servername, $username, $password, $dbname);
 
     if (!$conn) {
-        die("Connection failed: " . mysqli_connect_error());
+        // แทนที่จะ die() ให้ส่งข้อความ JSON error กลับไปแทน
+        if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['brand'])) {
+            header('Content-Type: application/json; charset=utf-8');
+            // ส่งข้อผิดพลาดกลับไปในรูปแบบที่ AJAX คาดหวัง
+            echo json_encode(["status" => "error", "message" => "DATABASE_CONNECTION_ERROR"]);
+            exit();
+        } else {
+            // สำหรับการโหลดหน้าปกติ ให้แสดง error (หรือซ่อน error)
+            die("Connection failed: " . mysqli_connect_error());
+        }
     } else {
         // echo "<p style='color:green;'>Connected to: " . $dbname . "</p>";
     }
