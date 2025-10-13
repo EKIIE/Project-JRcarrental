@@ -36,7 +36,7 @@ function connect_db()
             die("Connection failed: " . mysqli_connect_error());
         }
     } else {
-        echo "Connected successfully"; // ทดสอบการเชื่อมต่อฐานข้อมูล
+        // echo "Connected successfully"; // ทดสอบการเชื่อมต่อฐานข้อมูล
     }
 
     mysqli_set_charset($conn, "utf8");
