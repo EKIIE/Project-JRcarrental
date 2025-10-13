@@ -7,7 +7,6 @@ ini_set('display_errors', 1);
 function connect_db()
 {
     $host_id = $_SERVER['SERVER_ADDR'];
-    // echo "<p style='color: blue;'>Server IP: $host_id</p>";
 
 
     if ($host_id == "127.0.0.1" or $host_id == "::1") {
@@ -22,7 +21,6 @@ function connect_db()
         $username = "root";
         $password = "rooT2244_";
         $dbname = "jr_carrental";
-        // echo "<p style='color: red;'>Using: $username@$servername</p>";
     }
     $conn = mysqli_connect($servername, $username, $password, $dbname);
 
@@ -38,7 +36,7 @@ function connect_db()
             die("Connection failed: " . mysqli_connect_error());
         }
     } else {
-        echo "<p style='color:green;'>Connected to: " . $dbname . "</p>";
+        
     }
 
     mysqli_set_charset($conn, "utf8");
