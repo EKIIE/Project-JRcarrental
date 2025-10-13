@@ -9,6 +9,7 @@ $rate     = isset($_POST['rate'])     ? (float)$_POST['rate'] : 0;
 // $deposit  = isset($_POST['deposit'])  ? (float)$_POST['deposit'] : 0;
 $start    = isset($_POST['start_date']) ? trim($_POST['start_date']) : '';
 $end      = isset($_POST['end_date'])   ? trim($_POST['end_date'])   : '';
+$pickup   = isset($_POST['pickup_time']) ? trim($_POST['pickup_time']) : '';
 $location = isset($_POST['location'])   ? trim($_POST['location'])   : '';
 $note     = isset($_POST['note'])       ? trim($_POST['note'])       : '';
 
@@ -37,13 +38,15 @@ $_SESSION['temp_booking'] = [
     'car_id'      => $car_id,
     'rate'        => $rate,
     'deposit'     => $deposit,
-    'start_date'  => $d1->format('Y-m-d 00:00:00'),
-    'end_date'    => $d2->format('Y-m-d 00:00:00'),
+    'start_date'  => $d1->format('Y-m-d'),
+    'end_date'    => $d2->format('Y-m-d'),
+    'pickup_time' => $pickup,
     'location'    => $location,
     'note'        => $note,
     'days'        => $days,
     'total_price' => $bd_paynow,           // ชำระตอนนี้ (มัดจำ)
-    'rent_total'  => $rate * $days       // ค่าเช่ารวม (ชำระตอนคืนรถ)
+    // 'rent_total'  => $rate * $days       // ค่าเช่ารวม (ชำระตอนคืนรถ)
+    'rent_total'  => $rent_total     // ค่าเช่ารวม (ชำระตอนคืนรถ)
 ];
 
 // --- ตั้งหมดอายุ 10 นาที ---
@@ -151,11 +154,13 @@ $expires_at = $_SESSION['expires_at'];
 
 <body class="text-center py-5">
     <h2>สแกนเพื่อชำระเงิน</h2>
-    <p><strong><?= number_format($bd_paynow, 2) ?> บาท</strong></p>
-
-    <img src="generate_qr.php" width="300" class="mb-3" alt="PromptPay QR">
-
     <div class="mb-2">เวลาที่เหลือ: <span id="timer">10:00</span></div>
+    
+    <img src="generate_qr.php" width="300" class="mb-3" alt="PromptPay QR">
+    
+    <p><strong><?= number_format($bd_paynow, 2) ?> บาท</strong></p>
+    <input type="hidden" id="amount" value="<?= $rent_total ?>">
+    <input type="hidden" id="pickup_time" value="<?= htmlspecialchars($pickup) ?>">
 
     <!-- SLIP -->
     <form method="post" action="confirm_payment.php" class="mt-3 container" style="max-width:520px" enctype="multipart/form-data">

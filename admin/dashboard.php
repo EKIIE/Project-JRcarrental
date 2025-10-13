@@ -483,14 +483,41 @@ while ($r = mysqli_fetch_assoc($rental_per_car)) {
 
             // --- ยอดการเช่ารายคัน ---
             var data9 = google.visualization.arrayToDataTable([
-                ['ป้ายทะเบียน', 'จำนวนการเช่า'],
-                ...<?= json_encode($chart_rental_per_car) ?>
+                ['ป้ายทะเบียน', 'จำนวนการเช่า', {
+                    role: 'annotation'
+                }],
+                ...<?= json_encode(array_map(fn($r) => [$r[0], $r[1], $r[0]], $chart_rental_per_car)) ?>
             ]);
+
             var chart9 = new google.visualization.BarChart(document.getElementById('rental_per_car_chart'));
             chart9.draw(data9, {
                 title: 'ยอดการเช่ารายคัน',
-                colors: ['#007bff']
+                bars: 'horizontal',
+                colors: ['#007bff'],
+                legend: {
+                    position: 'none'
+                },
+                annotations: {
+                    alwaysOutside: true, // ให้แสดงตลอด
+                    textStyle: {
+                        fontSize: 10,
+                        color: '#333',
+                        bold: true
+                    }
+                },
+                hAxis: {
+                    title: 'จำนวนการเช่า',
+                    minValue: 0
+                },
+                vAxis: {
+                    textPosition: 'none' // ซ่อนชื่อแกนแนวตั้ง เพราะเราแสดงเองแล้ว
+                },
+                chartArea: {
+                    left: 100,
+                    width: '80%'
+                }
             });
+
 
         }
     </script>
