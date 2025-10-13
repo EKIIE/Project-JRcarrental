@@ -105,8 +105,8 @@ if (mysqli_stmt_execute($stmt)) {
   $customer_name = $user ? $user['firstname'] . ' ' . $user['lastname'] . ' ' . $user['phone_number']: 'ไม่ทราบชื่อ';
   $car_name = $car ? $car['brand'] . ' ' . $car['model'] : 'ไม่ทราบรุ่น';
   $car_plate = $car ? $car['license_plate'] : 'ไม่ทราบทะบียน';
-  $staff_link ="http://localhost/jrtest/staff/staff_dashboard.php"; // localhost
-  // $staff_link ="http://3.106.232.160/Project-JRcarrental/staff/staff_dashboard.php"; // server
+  // $staff_link ="http://localhost/jrtest/staff/staff_dashboard.php"; // localhost
+  $staff_link ="http://3.106.232.160/Project-JRcarrental/staff/staff_dashboard.php"; // server
   // $totalall = $total;
 
   $msg = "🚗 มีการจองรถใหม่เข้ามา!\n"
