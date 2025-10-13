@@ -117,7 +117,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['brand'])) {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     mysqli_stmt_bind_param(
         $stmt,
-        "ssissii dsss",
+        "ssissiiddsss", // <-- น่าจะมีปัญหาตรงนี้
         $brand,
         $model,
         $year,
@@ -131,6 +131,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['brand'])) {
         $main_image_path,
         $description
     );
+
 
     $ok = mysqli_stmt_execute($stmt);
     $new_id = mysqli_insert_id($conn);
@@ -784,7 +785,17 @@ $result = mysqli_query($conn, $sql);
                         method: "POST",
                         body: fd
                     })
-                    .then(res => res.json())
+                    .then(async (res) => { // **เปลี่ยน** เพื่อจัดการข้อความที่ไม่ใช่ JSON
+                        const text = await res.text();
+                        try {
+                            // พยายามแปลงเป็น JSON
+                            return JSON.parse(text);
+                        } catch (e) {
+                            // หากแปลงไม่สำเร็จ ให้แสดงข้อความเต็ม ๆ จาก PHP
+                            console.error("Non-JSON Response Error:", text);
+                            throw new Error("SERVER_ERROR_NOT_JSON: " + text);
+                        }
+                    })
                     .then(data => {
                         if (data.status === "success") {
                             Swal.fire({
@@ -805,11 +816,18 @@ $result = mysqli_query($conn, $sql);
                             });
                         }
                     })
-                    .catch(() => Swal.fire({
-                        icon: 'error',
-                        title: 'เกิดข้อผิดพลาด',
-                        text: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์'
-                    }));
+                    .catch(err => {
+                        console.error(err);
+                        let errMsg = err.message.includes("SERVER_ERROR_NOT_JSON") ?
+                            "เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง โปรดตรวจสอบ PHP Error Log" :
+                            'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์';
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด',
+                            text: errMsg
+                        });
+                    });
             });
 
             /* --------- แก้ไขรถ (ต้องมีไฟล์ car_update.php) --------- */
