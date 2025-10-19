@@ -100,13 +100,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['brand'])) {
         exit;
     }
 
+    //--------------------------------------------------------------------------
+    // Upload main image
     // อัปโหลดรูปหลัก
-    [$okMain, $main_or_err] = safe_image_upload($_FILES['main_image'] ?? null, "main_", $upload_dir);
-    if (!$okMain) {
-        echo json_encode(["status" => "error", "message" => $main_or_err]);
+    // [$okMain, $main_or_err] = safe_image_upload($_FILES['main_image'] ?? null, "main_", $upload_dir);
+    // if (!$okMain) {
+    //     echo json_encode(["status" => "error", "message" => $main_or_err]);
+    //     exit;
+    // }
+    // $main_image_path = $main_or_err;
+
+    // ใช้ URL แทนรูปอัปโหลด
+    $main_image_url = trim($_POST['main_image_url'] ?? '');
+    if (!filter_var($main_image_url, FILTER_VALIDATE_URL)) {
+        echo json_encode(["status" => "error", "message" => "URL รูปหลักไม่ถูกต้อง"]);
         exit;
     }
-    $main_image_path = $main_or_err;
+    $main_image_path = $main_image_url; // เก็บ URL แทนไฟล์
+    //--------------------------------------------------------------------------
 
     // Insert cars (prepared)
     $type_id = (int)($_POST["car_type"] ?? 0);
@@ -143,6 +154,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['brand'])) {
         exit;
     }
 
+    /*
     // อัปโหลดรูปเพิ่มเติม (optional)
     if (isset($_FILES['extra_images']) && !empty($_FILES['extra_images']['tmp_name'][0])) {
         $count = count($_FILES['extra_images']['tmp_name']);
@@ -158,6 +170,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['brand'])) {
             if ($okX) {
                 $stmt = mysqli_prepare($conn, "INSERT INTO car_images (car_id, image_path) VALUES (?, ?)");
                 mysqli_stmt_bind_param($stmt, "is", $new_id, $xname);
+                mysqli_stmt_execute($stmt);
+                mysqli_stmt_close($stmt);
+            }
+        }
+    }
+    */
+    $extra_image_urls = trim($_POST["extra_image_urls"] ?? '');
+    if ($extra_image_urls !== '') {
+        $urls = array_map('trim', explode(',', $extra_image_urls));
+        foreach ($urls as $url) {
+            if (filter_var($url, FILTER_VALIDATE_URL)) {
+                $stmt = mysqli_prepare($conn, "INSERT INTO car_images (car_id, image_path) VALUES (?, ?)");
+                mysqli_stmt_bind_param($stmt, "is", $new_id, $url);
                 mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
             }
@@ -404,7 +429,9 @@ $result = mysqli_query($conn, $sql);
                                         <td><?= (int)$row['car_id'] ?></td>
                                         <td>
                                             <img
-                                                src="../uploads/cars/<?= htmlspecialchars($row['image_path']) ?>"
+                                                src="<?= filter_var($row['image_path'], FILTER_VALIDATE_URL)
+                                                            ? htmlspecialchars($row['image_path'])
+                                                            : '../uploads/cars/' . htmlspecialchars($row['image_path']) ?>"
                                                 alt="รูป<?= htmlspecialchars($row['brand']) ?>"
                                                 class="car-thumb rounded shadow-sm"
                                                 data-bs-toggle="modal"
@@ -544,12 +571,14 @@ $result = mysqli_query($conn, $sql);
                                 <input type="number" class="form-control" name="deposit" id="deposit" min="0" step="50" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">รูปหลัก (JPG/PNG)</label>
-                                <input type="file" name="main_image" class="form-control" accept="image/jpeg,image/png" required>
+                                <label class="form-label">รูปหลัก</label>
+                                <input type="url" name="main_image_url" class="form-control" placeholder="https://..." required>
+                                <!-- <input type="file" name="main_image" class="form-control" accept="image/jpeg,image/png" required> -->
                             </div>
                             <div class="col-12">
-                                <label class="form-label">รูปเพิ่มเติม (อัปโหลดได้หลายรูป)</label>
-                                <input type="file" name="extra_images[]" class="form-control" multiple accept="image/jpeg,image/png">
+                                <label class="form-label">รูปเพิ่มเติม</label>
+                                <textarea name="extra_image_urls" class="form-control" rows="2" placeholder="https://... , https://..."></textarea>
+                                <!-- <input type="file" name="extra_images[]" class="form-control" multiple accept="image/jpeg,image/png"> -->
                             </div>
                             <div class="col-12">
                                 <label class="form-label">คำอธิบาย</label>
@@ -579,7 +608,8 @@ $result = mysqli_query($conn, $sql);
                         <!-- รูปหลัก -->
                         <div class="mb-3 text-center">
                             <img id="edit_main_image_preview" src="" alt="รูปหลัก" class="rounded shadow" style="width:200px; height:auto; object-fit:cover; cursor:pointer;">
-                            <input type="file" name="main_image" id="edit_main_image" class="d-none" accept="image/jpeg,image/png">
+                            <input type="url" name="main_image_url" id="edit_main_image_url" class="form-control" placeholder="https://..." required>
+                            <!-- <input type="file" name="main_image" id="edit_main_image" class="d-none" accept="image/jpeg,image/png"> -->
                             <div class="text-muted small">คลิกที่รูปเพื่อเปลี่ยนรูปหลัก</div>
                         </div>
 
@@ -651,7 +681,8 @@ $result = mysqli_query($conn, $sql);
                             <div class="col-12">
                                 <label class="form-label">รูปเพิ่มเติม</label>
                                 <div id="edit_extra_images_preview" class="d-flex flex-wrap gap-2"></div>
-                                <input type="file" name="extra_images[]" class="form-control mt-2" multiple accept="image/jpeg,image/png">
+                                <textarea name="extra_image_urls" id="edit_extra_image_urls" class="form-control" rows="2"></textarea>
+                                <!-- <input type="file" name="extra_images[]" class="form-control mt-2" multiple accept="image/jpeg,image/png"> -->
                             </div>
                         </div>
                     </div>
@@ -686,7 +717,13 @@ $result = mysqli_query($conn, $sql);
                 document.getElementById('edit_rate').value = btn.getAttribute('data-rate');
                 document.getElementById('edit_deposit').value = btn.getAttribute('data-deposit') ?? 0;
                 document.getElementById('edit_desc').value = btn.getAttribute('data-desc') || '';
-                document.getElementById('edit_main_image_preview').src = "../uploads/cars/" + (btn.getAttribute('data-mainimg') || '');
+                // document.getElementById('edit_main_image_preview').src = "../uploads/cars/" + (btn.getAttribute('data-mainimg') || '');
+                const src = btn.getAttribute('data-mainimg') || '';
+                const preview = document.getElementById('edit_main_image_preview');
+                preview.src = src.startsWith('http') ?
+                    src :
+                    '../uploads/cars/' + src || 'https://placehold.co/200x120?text=No+Image';
+
 
                 // โหลดรูปเพิ่มเติม
                 fetch(`car_images_api.php?car_id=${cid}`)
@@ -696,7 +733,7 @@ $result = mysqli_query($conn, $sql);
                         if (data.status === 'success' && data.images.length > 0) {
                             box.innerHTML = data.images.map(img => `
                     <div class="position-relative d-inline-block m-1">
-                        <img src="../uploads/cars/${img}" class="rounded shadow-sm" style="width:100px;">
+                        <img src="${img}" class="rounded shadow-sm" style="width:100px;">
                         <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 delete-extra-img"
                                 data-filename="${img}" data-car-id="${cid}">&times;</button>
                     </div>`).join('');
@@ -705,9 +742,11 @@ $result = mysqli_query($conn, $sql);
                         }
                     });
             });
+            //<img src="../uploads/cars/${img}" class="rounded shadow-sm" style="width:100px;">
+            //<img src="${img}" class="rounded shadow-sm" style="width:100px;">
 
             // เปลี่ยนรูปหลัก (แก้ไข)
-            const mainPrev = document.getElementById('edit_main_image_preview');
+            /* const mainPrev = document.getElementById('edit_main_image_preview');
             const mainInput = document.getElementById('edit_main_image');
             mainPrev.addEventListener('click', () => mainInput.click());
             mainInput.addEventListener('change', (e) => {
@@ -717,7 +756,13 @@ $result = mysqli_query($conn, $sql);
                     rd.onload = e2 => mainPrev.src = e2.target.result;
                     rd.readAsDataURL(f);
                 }
-            });
+            }); */
+            // คลิกที่รูปแล้ว focus ช่อง URL
+            const mainPrev = document.getElementById('edit_main_image_preview');
+            const mainUrlInput = document.getElementById('edit_main_image_url');
+            if (mainPrev && mainUrlInput) {
+                mainPrev.addEventListener('click', () => mainUrlInput.focus());
+            }
 
             /* --------- แกลเลอรี: โหลดตอนเปิด --------- */
             const carGalleryModal = document.getElementById('carGalleryModal');
@@ -733,13 +778,15 @@ $result = mysqli_query($conn, $sql);
                         if (data.status === 'success' && data.images.length > 0) {
                             gallery.innerHTML = '<div class="row">' + data.images.map(im => `
                     <div class="col-md-4 mb-3">
-                        <img src="../uploads/cars/${im}" class="img-fluid rounded shadow-sm">
+                        <img src="${im}" class="img-fluid rounded shadow-sm">
                     </div>`).join('') + '</div>';
                         } else {
                             gallery.innerHTML = '<p class="text-danger">ไม่พบรูปรถเพิ่มเติม</p>';
                         }
                     });
             });
+            //<img src="../uploads/cars/${im}" class="img-fluid rounded shadow-sm">
+            //<img src="${im}" class="img-fluid rounded shadow-sm">
 
             /* --------- ลบรูปเพิ่มเติม (ปุ่มใน modal edit) --------- */
             document.addEventListener('click', (e) => {

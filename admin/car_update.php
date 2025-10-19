@@ -85,7 +85,17 @@ if ($dup > 0) {
 // ---- อัปโหลดรูปใหม่ ----
 $upload_dir = "../uploads/cars/";
 $new_main_image = null;
-if (isset($_FILES["main_image"]) && $_FILES["main_image"]["error"] === 0) {
+// ✅ ถ้ามี URL ส่งมาก็ใช้ URL เลย
+if (!empty($_POST['main_image_url'])) {
+    $url = trim($_POST['main_image_url']);
+    if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        echo json_encode(["status" => "error", "message" => "URL รูปหลักไม่ถูกต้อง"]);
+        exit;
+    }
+    $new_main_image = $url;
+}
+// ✅ ถ้าไม่มี URL แต่มีไฟล์ ให้ใช้ไฟล์แทน
+elseif (isset($_FILES["main_image"]) && $_FILES["main_image"]["error"] === 0) {
     [$ok, $res] = safe_image_upload($_FILES["main_image"], "main_", $upload_dir);
     if (!$ok) {
         echo json_encode(["status" => "error", "message" => $res]);
@@ -102,7 +112,7 @@ try {
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param(
             $stmt,
-            "ssissiidsss si",
+            "ssissiidssssi",
             $brand,
             $model,
             $year,
@@ -140,7 +150,7 @@ try {
 
     if (!mysqli_stmt_execute($stmt)) throw new Exception("DB update fail");
     mysqli_stmt_close($stmt);
-    
+
     // ---- อัปโหลดรูปเพิ่มเติม ----
     if (isset($_FILES['extra_images']) && !empty($_FILES['extra_images']['tmp_name'][0])) {
         $count = count($_FILES['extra_images']['tmp_name']);
@@ -156,6 +166,19 @@ try {
             if ($okX) {
                 $stmtX = mysqli_prepare($conn, "INSERT INTO car_images (car_id, image_path) VALUES (?, ?)");
                 mysqli_stmt_bind_param($stmtX, "is", $car_id, $xname);
+                mysqli_stmt_execute($stmtX);
+                mysqli_stmt_close($stmtX);
+            }
+        }
+    }
+    // ✅ เพิ่มรูปเพิ่มเติมจาก URL
+    $extra_image_urls = trim($_POST["extra_image_urls"] ?? '');
+    if ($extra_image_urls !== '') {
+        $urls = array_map('trim', explode(',', $extra_image_urls));
+        foreach ($urls as $url) {
+            if (filter_var($url, FILTER_VALIDATE_URL)) {
+                $stmtX = mysqli_prepare($conn, "INSERT INTO car_images (car_id, image_path) VALUES (?, ?)");
+                mysqli_stmt_bind_param($stmtX, "is", $car_id, $url);
                 mysqli_stmt_execute($stmtX);
                 mysqli_stmt_close($stmtX);
             }
