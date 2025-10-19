@@ -234,7 +234,11 @@ $result = mysqli_stmt_get_result($stmt);
             default     => 'secondary',
           };
 
-          $carImg = '../uploads/cars/' . $row['image_path'];
+          $img = $row['image_path'] ?? '';
+          $carImg = ($img && strpos($img, 'http') === 0)
+            ? $img
+            : ($img ? '../uploads/cars/' . $img : 'https://placehold.co/600x400?text=No+Image');
+
           $empFull = trim(($row['emp_fname'] ?? '') . ' ' . ($row['emp_lname'] ?? ''));
           $hasEmp  = ($status === 'confirmed' && !empty($row['emp_deliver']));
           $modalId = 'empModal' . $row['booking_id'];

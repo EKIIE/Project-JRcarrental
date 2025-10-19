@@ -158,8 +158,16 @@ session_start();
       while ($car = mysqli_fetch_assoc($cars)): ?>
         <div class="col-md-4 col-sm-6">
           <div class="card h-100">
-            <img src="uploads/cars/<?= $car['image_path'] ?>" class="card-img-top" alt="<?= $car['model'] ?>"
+            <?php
+            $img = $car['image_path'] ?? '';
+            $imageSrc = ($img && strpos($img, 'http') === 0)
+              ? $img
+              : ($img ? 'uploads/cars/' . $img : 'img/no-image.png');
+            ?>
+            <img src="<?= htmlspecialchars($imageSrc) ?>" class="card-img-top"
+              alt="<?= htmlspecialchars($car['model']) ?>"
               style="height:200px; object-fit:cover; border-top-left-radius:1rem; border-top-right-radius:1rem;">
+
             <div class="card-body text-center">
               <h5 class="card-title"><?= $car['brand'] . " " . $car['model'] ?></h5>
               <p class="text-muted">ราคา <?= number_format($car['daily_rate']) ?> บาท/วัน</p>
@@ -250,7 +258,10 @@ session_start();
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     function openCarDetail(car) {
-      document.getElementById('modalCarImage').src = 'uploads/cars/' + car.image;
+      const imgSrc = car.image && car.image.startsWith('http') ?
+        car.image :
+        (car.image ? 'uploads/cars/' + car.image : 'img/no-image.png');
+      document.getElementById('modalCarImage').src = imgSrc;
       document.getElementById('modalCarTitle').textContent = car.brand + ' ' + car.model;
       document.getElementById('modalCarDescription').textContent = car.description;
       document.getElementById('modalCarRate').textContent = parseFloat(car.rate).toFixed(0);

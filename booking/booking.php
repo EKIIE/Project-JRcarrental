@@ -109,7 +109,7 @@ if (!$car) {
   <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
   <!-- Pikaday JS -->
   <script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
-  
+
   <style>
     /* 🧁 JR Car Rental Theme */
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
@@ -229,9 +229,13 @@ if (!$car) {
     <h2>จองรถ: <?= $car['brand'] ?> <?= $car['model'] ?></h2>
     <div class="row">
       <div class="col-md-6">
-        <?php $carImg = "../uploads/cars/" . $car['image_path']; ?>
-        <img src="<?= $carImg ?>" class="img-fluid" alt="car image">
-
+        <?php
+        $img = $car['image_path'] ?? '';
+        $carImg = ($img && strpos($img, 'http') === 0)
+          ? $img
+          : ($img ? "../uploads/cars/" . $img : "https://placehold.co/600x400?text=No+Image");
+        ?>
+        <img src="<?= htmlspecialchars($carImg) ?>" class="img-fluid rounded-3 shadow-sm" alt="car image" style="object-fit:cover;">
 
         <p class="mt-3"><strong>ค่าบริการ:</strong> <?= number_format($car['daily_rate']) ?> บาท/วัน </p>
         <!-- <p class="mt-3"><strong>ค่ามัดจำ:</strong> 20%</p> -->
