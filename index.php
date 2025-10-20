@@ -149,14 +149,34 @@ session_start();
   <!-- Content -->
   <div class="container py-5">
     <h2 class="fw-semibold mb-4 text-center">รายการรถเช่า</h2>
-    <div class="row g-4">
+
+    <!-- ปุ่มกรองประเภทรถ -->
+    <div class="text-center mb-4">
+      <div class="btn-group flex-wrap" id="typeFilters">
+        <button class="btn btn-outline-brown active" data-type="all">ทั้งหมด</button>
+        <?php
+        $types = mysqli_query($conn, "SELECT * FROM car_types ORDER BY type_name ASC");
+        while ($t = mysqli_fetch_assoc($types)): ?>
+          <button class="btn btn-outline-brown" data-type="<?= $t['type_id'] ?>">
+            <?= htmlspecialchars($t['type_name']) ?>
+          </button>
+        <?php endwhile; ?>
+      </div>
+    </div>
+
+    <div class="row g-4" id="carList">
       <?php
-      $cars = mysqli_query($conn, "SELECT * FROM cars WHERE status != 'maintenance'");
+      $cars = mysqli_query($conn, "
+    SELECT c.*, ct.type_name 
+    FROM cars c 
+    LEFT JOIN car_types ct ON c.type_id = ct.type_id 
+    WHERE c.status != 'maintenance'
+  ");
       if (mysqli_num_rows($cars) == 0) {
         echo "<div class='text-center text-muted py-5'>— ยังไม่มีรถให้เช่าในขณะนี้ —</div>";
       }
       while ($car = mysqli_fetch_assoc($cars)): ?>
-        <div class="col-md-4 col-sm-6">
+        <div class="col-md-4 col-sm-6 car-item" data-type="<?= $car['type_id'] ?>">
           <div class="card h-100">
             <?php
             $img = $car['image_path'] ?? '';
@@ -170,6 +190,9 @@ session_start();
 
             <div class="card-body text-center">
               <h5 class="card-title"><?= $car['brand'] . " " . $car['model'] ?></h5>
+              <p class="text-muted mb-1">
+                <?= htmlspecialchars($car['type_name'] ?? 'ไม่ระบุประเภท') ?>
+              </p>
               <p class="text-muted">ราคา <?= number_format($car['daily_rate']) ?> บาท/วัน</p>
               <button class="btn btn-outline-secondary w-100"
                 onclick='openCarDetail(<?= json_encode([
@@ -187,6 +210,48 @@ session_start();
         </div>
       <?php endwhile; ?>
     </div>
+
+    <style>
+      .btn-outline-brown {
+        border-color: #c8a889;
+        color: #5a3e2f;
+        margin: 0.25rem;
+        transition: all 0.2s ease;
+      }
+
+      .btn-outline-brown:hover {
+        background-color: #c8a889;
+        color: #fff;
+      }
+
+      .btn-outline-brown.active {
+        background-color: #6b4f3b;
+        color: #fff;
+        border-color: #6b4f3b;
+      }
+    </style>
+
+    <script>
+      // กรองรถตามประเภท
+      document.querySelectorAll("#typeFilters button").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const type = btn.dataset.type;
+          // toggle active
+          document.querySelectorAll("#typeFilters button").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+
+          // filter cars
+          document.querySelectorAll(".car-item").forEach(card => {
+            if (type === "all" || card.dataset.type === type) {
+              card.style.display = "block";
+            } else {
+              card.style.display = "none";
+            }
+          });
+        });
+      });
+    </script>
+
   </div>
 
   <!-- REVIEWS -->
