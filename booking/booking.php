@@ -240,7 +240,23 @@ if (!$car) {
         <p class="mt-3"><strong>ค่าบริการ:</strong> <?= number_format($car['daily_rate']) ?> บาท/วัน </p>
         <!-- <p class="mt-3"><strong>ค่ามัดจำ:</strong> 20%</p> -->
         <p><strong>รายละเอียด:</strong> <?= $car['description'] ?></p>
+
+        <div class="mt-4 p-3 border rounded-3" style="background:#fffaf4; border-color:#f1e3d3;">
+          <h5 class="mb-2 text-brown fw-semibold"><i class="fa-solid fa-gift me-1 text-warning"></i> โปรโมชั่นพิเศษ</h5>
+          <ul class="mb-0 ps-3">
+            <li>จอง 15 วันขึ้นไป ลด <strong>5%</strong> จากราคารวม</li>
+            <li>จอง 30 วันขึ้นไป ลด <strong>15%</strong> จากราคารายเดือน</li>
+            <li>รับส่วนลดอัตโนมัติเมื่อเลือกวันครบตามเงื่อนไข</li>
+          </ul>
+        </div>
+
+        <style>
+          .text-brown {
+            color: #6b4f3b;
+          }
+        </style>
       </div>
+
       <div class="col-md-6">
         <form method="post" action="payment_qr.php">
           <input type="hidden" name="car_id" value="<?= $car['car_id'] ?>">
@@ -345,6 +361,10 @@ if (!$car) {
               <span>ค่าเช่า <span id="bd_days"></span> วัน</span>
               <strong id="bd_rent_total"></strong>
             </div>
+            <div class="d-flex justify-content-between text-success" id="discount_row" style="display:none;">
+              <span>ส่วนลดพิเศษ</span>
+              <strong id="bd_discount"></strong>
+            </div>
             <hr class="my-2">
             <div class="d-flex justify-content-between">
               <span>ชำระค่ามัดจำเพื่อทำการจอง</span>
@@ -393,20 +413,23 @@ if (!$car) {
         const diff = Math.ceil((d2 - d1) / msPerDay);
         const days = Math.max(1, diff);
 
-        let rentTotal = 0;
+        let rentTotal = rate * days;
+        let discount = 0;
+        let discountPercent = 0;
 
+        // 🧾 ส่วนลดตามจำนวนวัน
         if (days >= 30) {
-          // คิดแบบรายเดือน
+          // รายเดือน ลด 15%
+          discountPercent = 15;
+          const monthlyRate = (rate * 30) * 0.85;
           const months = Math.floor(days / 30);
           const leftover = days % 30;
-          const monthlyRate = (rate * 30) * 0.85; // ส่วนลด 15%
           rentTotal = (months * monthlyRate) + (leftover * rate);
-        } else if (days >= 15 && days < 30) {
-          // คิดแบบรายวัน + ลด 5%
-          rentTotal = (rate * days) * 0.95;
-        } else {
-          // คิดแบบรายวันปกติ
-          rentTotal = rate * days;
+        } else if (days >= 15) {
+          // ครึ่งเดือน ลด 5%
+          discountPercent = 5;
+          discount = rentTotal * 0.05;
+          rentTotal -= discount;
         }
 
         const deposit = Math.ceil(rentTotal * 0.2);
@@ -420,6 +443,16 @@ if (!$car) {
         bd.rentTotal.textContent = numberFmt(rentTotal) + ' บาท';
         bd.paynow.textContent = numberFmt(deposit) + ' บาท';
         bd.box.style.display = 'block';
+
+        // แสดงแถวส่วนลด (เฉพาะถ้ามี)
+        const discountRow = document.getElementById('discount_row');
+        const discountLabel = document.getElementById('bd_discount');
+        if (discountPercent > 0) {
+          discountRow.style.display = 'flex';
+          discountLabel.textContent = `-${discountPercent}%`;
+        } else {
+          discountRow.style.display = 'none';
+        }
 
         // เก็บ days เพิ่มไปกับฟอร์ม (ถ้ายังไม่มีให้เพิ่ม input hidden)
         let hd = document.getElementById('hidden_days');

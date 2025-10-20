@@ -135,7 +135,7 @@ session_start();
   <section class="hero py-5">
     <div class="container">
       <div class="hero-box position-relative rounded-4 overflow-hidden shadow-sm">
-        <img src="img/banner.jpg" class="w-100" style="height: 420px; object-fit: cover; filter: brightness(65%);">
+        <img src="img/banner.png" class="w-100" style="height: 420px; object-fit: cover; filter: brightness(65%);">
         <div class="hero-overlay position-absolute top-50 start-50 translate-middle text-center text-white px-3">
           <h1 class="fw-bold mb-3" style="font-size: 2.5rem;">ยินดีต้อนรับสู่ JR Car Rental</h1>
           <p class="mb-4" style="font-size: 1.2rem;">บริการเช่ารถคุณภาพ ราคายุติธรรม พร้อมให้บริการทุกการเดินทางของคุณ</p>
