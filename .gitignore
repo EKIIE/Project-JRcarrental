@@ -1,7 +1,7 @@
 vendor/
 .env
-# .DS_Store
-# .vscode/
-# .idea/
+.DS_Store
+.vscode/
+.idea/
 
 package-lock.json
